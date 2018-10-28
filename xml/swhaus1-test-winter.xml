@@ -1,0 +1,1120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<!--
+    Control Datei für die Funkdosen-Steuerung, by Peter K. Boxler, August 2014
+     Pro Steckdose (max 4) sind für jeden Wochentag (0=Sonntag bis 6=Samstag)
+     beliebige Sequenzen definierbar. Eine Sequenz besteht je aus Einschalten/Ausschalten
+     zu bestimmten Zeitpunkten (HHMM)
+     
+     Ist Input-File für die Python Applikation switcher2.py und swlist.py
+
+    Mit 4 Dosen für Winter  TESTVERSION
+-->
+<aktionen saison = "Wintersaison">
+<file_id>Winter Test 4D Prisca</file_id>
+<from_date>28.September</from_date>
+<to_date>03.März</to_date>
+<!--
+Dose Nummer 1  Wohnzimmer***************************** Dose 1 
+-->
+
+<dose name = "Wohnzimmer">
+<dose_nr> 1 </dose_nr>
+
+<tag nummer = "0">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>19.25</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>20.25</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "1">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>19.15</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.05</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "2">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.45</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.05</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "3">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.45</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.05</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "4">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.45</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.05</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+  </tag>
+
+  <tag nummer = "5">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.45</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.05</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "6">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.45</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.05</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+  </tag>
+
+</dose>
+<!--
+Dose Nummer 2  Wintergarten *************************** Dose 2 
+-->
+
+<dose name = "Wintergarten">
+<dose_nr> 2 </dose_nr>
+
+<tag nummer = "0">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>19.25</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>20.25</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "1">
+
+
+ <sequence>
+  	<ON>00.25</ON>
+  	<OFF>00.45</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.45</ON>
+  	<OFF>09.02</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.30</ON>
+  	<OFF>11.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.55</ON>
+  	<OFF>13.20</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.50</ON>
+  	<OFF>18.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.55</ON>
+  	<OFF>19.23</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.10</ON>
+  	<OFF>21.30</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.20</ON>
+  	<OFF>23.20</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "2">
+
+ <sequence>
+  	<ON>00.25</ON>
+  	<OFF>00.45</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.45</ON>
+  	<OFF>09.02</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.30</ON>
+  	<OFF>11.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.55</ON>
+  	<OFF>13.20</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.50</ON>
+  	<OFF>18.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.55</ON>
+  	<OFF>19.23</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.10</ON>
+  	<OFF>21.30</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.20</ON>
+  	<OFF>23.20</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "3">
+
+ <sequence>
+  	<ON>00.25</ON>
+  	<OFF>00.45</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.45</ON>
+  	<OFF>09.02</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.30</ON>
+  	<OFF>11.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.55</ON>
+  	<OFF>13.20</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.50</ON>
+  	<OFF>18.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.55</ON>
+  	<OFF>19.23</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.10</ON>
+  	<OFF>21.30</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.20</ON>
+  	<OFF>23.20</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "4">
+
+
+ <sequence>
+  	<ON>00.25</ON>
+  	<OFF>00.45</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.45</ON>
+  	<OFF>09.02</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.30</ON>
+  	<OFF>11.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.55</ON>
+  	<OFF>13.20</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.50</ON>
+  	<OFF>18.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.55</ON>
+  	<OFF>19.23</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.10</ON>
+  	<OFF>21.30</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.20</ON>
+  	<OFF>23.20</OFF>
+  </sequence>
+  </tag>
+
+  <tag nummer = "5">
+
+ <sequence>
+  	<ON>00.25</ON>
+  	<OFF>00.45</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.45</ON>
+  	<OFF>09.02</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.30</ON>
+  	<OFF>11.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.55</ON>
+  	<OFF>13.20</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.50</ON>
+  	<OFF>18.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.55</ON>
+  	<OFF>19.23</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.10</ON>
+  	<OFF>21.30</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.20</ON>
+  	<OFF>23.20</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "6">
+
+ <sequence>
+  	<ON>00.25</ON>
+  	<OFF>00.45</OFF>
+  </sequence>
+    <sequence>
+  	<ON>08.45</ON>
+  	<OFF>09.02</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.30</ON>
+  	<OFF>11.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.55</ON>
+  	<OFF>13.20</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.50</ON>
+  	<OFF>18.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.55</ON>
+  	<OFF>19.23</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.10</ON>
+  	<OFF>21.30</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.20</ON>
+  	<OFF>23.20</OFF>
+  </sequence>
+  </tag>
+
+</dose>
+<!--
+Dose Nummer 3  Ankleide*********************************** Dose 3
+-->
+
+<dose name = "Ankleide">
+<dose_nr> 3 </dose_nr>
+
+<tag nummer = "0">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>19.25</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>20.25</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "1">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.55</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.30</ON>
+  	<OFF>10.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.55</ON>
+  	<OFF>11.20</OFF>
+  </sequence>
+      <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>16.50</ON>
+  	<OFF>17.27</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.34</ON>
+  	<OFF>19.13</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.23</ON>
+  	<OFF>21.56</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.14</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "2">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.55</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.30</ON>
+  	<OFF>10.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.55</ON>
+  	<OFF>11.20</OFF>
+  </sequence>
+      <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>16.50</ON>
+  	<OFF>17.27</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.34</ON>
+  	<OFF>19.13</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.23</ON>
+  	<OFF>21.56</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.14</OFF>
+  </sequence>
+  </tag>
+
+  <tag nummer = "3">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.55</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.30</ON>
+  	<OFF>10.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.55</ON>
+  	<OFF>11.20</OFF>
+  </sequence>
+      <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>16.50</ON>
+  	<OFF>17.27</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.34</ON>
+  	<OFF>19.13</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.23</ON>
+  	<OFF>21.56</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.14</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "4">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.55</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.30</ON>
+  	<OFF>10.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.55</ON>
+  	<OFF>11.20</OFF>
+  </sequence>
+      <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>16.50</ON>
+  	<OFF>17.27</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.34</ON>
+  	<OFF>19.13</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.23</ON>
+  	<OFF>21.56</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.14</OFF>
+  </sequence>
+  </tag>
+
+  <tag nummer = "5">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.55</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.30</ON>
+  	<OFF>10.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.55</ON>
+  	<OFF>11.20</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>16.50</ON>
+  	<OFF>17.27</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.34</ON>
+  	<OFF>19.13</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.23</ON>
+  	<OFF>21.56</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.14</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "6">
+
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.55</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.30</ON>
+  	<OFF>10.40</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.55</ON>
+  	<OFF>11.20</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>16.50</ON>
+  	<OFF>17.27</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>18.34</ON>
+  	<OFF>19.13</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.23</ON>
+  	<OFF>21.56</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.14</OFF>
+  </sequence>
+  </tag>
+
+
+</dose>
+
+<!--
+Dose Nummer 4  Arbeits******************************* Dose 4
+-->
+
+<dose name = "Arbeitszimmer">
+<dose_nr> 4 </dose_nr>
+
+<tag nummer = "0">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+  </sequence>
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+ <sequence>
+  	<ON>17.30</ON>
+  	<OFF>19.05</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>19.25</ON>
+  	<OFF>19.45</OFF>
+  </sequence>
+   <sequence>
+  	<ON>20.25</ON>
+  	<OFF>21.42</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.05</ON>
+  	<OFF>23.42</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "1">
+
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.50</ON>
+  	<OFF>10.48</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.15</ON>
+  	<OFF>11.10</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>15.50</ON>
+  	<OFF>17.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>17.25</ON>
+  	<OFF>19.05</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.00</ON>
+  	<OFF>21.18</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.12</ON>
+  	<OFF>23.09</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "2">
+
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.50</ON>
+  	<OFF>10.48</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.15</ON>
+  	<OFF>11.10</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>15.50</ON>
+  	<OFF>17.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>17.25</ON>
+  	<OFF>19.05</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.00</ON>
+  	<OFF>21.18</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.12</ON>
+  	<OFF>23.09</OFF>
+  </sequence>
+  </tag>
+
+  <tag nummer = "3">
+
+
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.50</ON>
+  	<OFF>10.48</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.15</ON>
+  	<OFF>11.10</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>15.50</ON>
+  	<OFF>17.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>17.25</ON>
+  	<OFF>19.05</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.00</ON>
+  	<OFF>21.18</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.12</ON>
+  	<OFF>23.09</OFF>
+  </sequence>
+   </tag>
+  <tag nummer = "4">
+
+
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.50</ON>
+  	<OFF>10.48</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.15</ON>
+  	<OFF>11.10</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>15.50</ON>
+  	<OFF>17.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>17.25</ON>
+  	<OFF>19.05</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.00</ON>
+  	<OFF>21.18</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.12</ON>
+  	<OFF>23.09</OFF>
+  </sequence>
+  </tag>
+
+  <tag nummer = "5">
+
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.50</ON>
+  	<OFF>10.48</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.15</ON>
+  	<OFF>11.10</OFF>
+  </sequence>
+    <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+  
+ <sequence>
+  	<ON>15.50</ON>
+  	<OFF>17.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>17.25</ON>
+  	<OFF>19.05</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.00</ON>
+  	<OFF>21.18</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.12</ON>
+  	<OFF>23.09</OFF>
+  </sequence>
+  </tag>
+  <tag nummer = "6">
+
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+ <sequence>
+  	<ON>09.50</ON>
+  	<OFF>10.48</OFF>
+  </sequence>
+  <sequence>
+  	<ON>10.15</ON>
+  	<OFF>11.10</OFF>
+  </sequence>
+     <sequence>
+  	<ON>12.10</ON>
+  	<OFF>13.05</OFF>
+  </sequence>
+  <sequence>
+  	<ON>13.50</ON>
+  	<OFF>14.25</OFF>
+  </sequence>
+ 
+ <sequence>
+  	<ON>15.50</ON>
+  	<OFF>17.23</OFF>
+  </sequence>  
+   <sequence>
+  	<ON>17.25</ON>
+  	<OFF>19.05</OFF>
+  </sequence>
+   <sequence>
+  	<ON>21.00</ON>
+  	<OFF>21.18</OFF>
+  </sequence>
+   <sequence>
+  	<ON>22.12</ON>
+  	<OFF>23.09</OFF>
+  </sequence>
+  </tag>
+
+
+</dose>
+
+
+</aktionen>

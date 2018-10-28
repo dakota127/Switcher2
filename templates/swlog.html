@@ -1,0 +1,31 @@
+{# braucht layout.html    #}
+
+{% extends "layout.html" %}
+{% block title %} Switcher2 Logfile {% endblock %}
+{% block body %} 
+		<div id="wrapper">
+
+    		<div id="header"  data-width="400">
+				<h1>Switcher 2 Control</h1>
+				<p>Switcher Log</p>
+					<a href="index.html">Home </a> 
+					<a href="status.html">Status </a> 
+					<a href="swlog.html">Log </a> 
+		            <a href="wetter.html">Wetter </a> 
+				
+			</div>
+			
+<div class="container">
+    <h2>Switcher Logfile</h2>
+   
+<div class="wrapperlog">
+    <div class="longcontent">
+               {% for item in logzeilen -%}
+                   {{ item }}  </br>
+                    {% endfor %}
+    </div>
+</div>
+</div>
+{% endblock %}
+</html>
+

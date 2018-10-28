@@ -1,0 +1,32 @@
+{# braucht layout.html    #}
+
+{% extends "layout.html" %}
+{% block title %} Switcher2 Status {% endblock %}
+{% block body %} 
+
+    <div id="header"  data-width="500">
+		<h1>Switcher 2 Control</h1>
+		<p>Ausführlicher Status</p>
+		    <a href="index.html">Home </a> 
+		    <a href="status.html">Status </a> 
+		    <a href="swlog.html">Log </a> 
+		    <a href="wetter.html">Wetter </a> 
+			<a href="about.html">About </a> 
+	</div>
+
+
+<div class="container">
+
+
+                <ul>
+                    {% for item in name -%}
+                    <li>  {{ item }} </li>
+                    {% endfor %}
+                </ul>     
+
+
+
+</div>
+
+{% endblock %}
+</html>

@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<!--
+    Control Datei für die Funkdosen-Steuerung, by Peter K. Boxler, August 2014
+     Pro Steckdose (max 4) sind für jeden Wochentag (0=Sonntag bis 6=Samstag)
+     beliebige Sequenzen definierbar. Eine Sequenz besteht je aus Einschalten/Ausschalten
+     zu bestimmten Zeitpunkten (HHMM)
+     
+     Ist Input-File für die Python Applikation switcher2.py und swlist.py
+
+-->
+<aktionen saison = "Wintersaison">
+<file_id>Winter Test2 4D Prisca</file_id>
+<from_date>29.September</from_date>
+<to_date>03.März</to_date>
+
+<!--
+Dose Nummer 1  Wohnzimmer***************************** Dose 1 
+-->
+
+<dose name = "Wohnzimmer">
+<dose_nr> 1 </dose_nr>
+
+<tag nummer = "0">
+ <sequence>
+  	<ON>00.17</ON>
+  	<OFF>00.27</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>09.40</ON>
+  	<OFF>11.25</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "1">
+ <sequence>
+  	<ON>00.10</ON>
+  	<OFF>00.20</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.00</OFF>
+</sequence>
+  </tag>
+<tag nummer = "2">
+ <sequence>
+  	<ON>00.18</ON>
+  	<OFF>00.21</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>09.40</ON>
+  	<OFF>11.05</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "3">
+ <sequence>
+  	<ON>00.06</ON>
+  	<OFF>00.15</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.07</ON>
+  	<OFF>10.30</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "4">
+ <sequence>
+  	<ON>00.13</ON>
+  	<OFF>00.24</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.00</ON>
+  	<OFF>10.25</OFF>
+</sequence>
+  </tag>
+
+<tag nummer = "5">
+ <sequence>
+  	<ON>00.17</ON>
+  	<OFF>00.28</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.05</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "6">
+ <sequence>
+  	<ON>00.11</ON>
+  	<OFF>00.21</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.07</ON>
+  	<OFF>11.11</OFF>
+</sequence>
+  </tag>
+
+</dose>
+<!--
+Dose Nummer 2  Wintergarten *************************** Dose 2 
+-->
+
+<dose name = "Wintergarten">
+<dose_nr> 2 </dose_nr>
+
+<tag nummer = "0">
+ <sequence>
+  	<ON>00.05</ON>
+  	<OFF>00.14</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.14</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "1">
+ <sequence>
+  	<ON>00.08</ON>
+  	<OFF>00.33</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.20</ON>
+  	<OFF>10.40</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "2">
+ <sequence>
+  	<ON>00.12</ON>
+  	<OFF>00.29</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.08</ON>
+  	<OFF>11.45</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "3">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.17</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>09.55</ON>
+  	<OFF>10.17</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "4">
+ <sequence>
+  	<ON>00.16</ON>
+  	<OFF>00.26</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.12</ON>
+  	<OFF>11.21</OFF>
+</sequence>
+  </tag>
+
+<tag nummer = "5">
+ <sequence>
+  	<ON>00.10</ON>
+  	<OFF>00.23</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.10</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "6">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+
+</dose>
+<!--
+Dose Nummer 3  Ankleide *********************************** Dose 3
+-->
+
+<dose name = "Ankleide">
+<dose_nr> 3 </dose_nr>
+
+<tag nummer = "0">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "1">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "2">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "3">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "4">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+
+<tag nummer = "5">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "6">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+
+  </tag>
+
+
+</dose>
+
+<!--
+Dose Nummer 4  Arbeitszimmer******************************* Dose 4
+-->
+
+<dose name = "Arbeitszimmer">
+<dose_nr> 4 </dose_nr>
+
+<tag nummer = "0">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+   </tag>
+   
+<tag nummer = "1">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "2">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+
+<tag nummer = "3">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "4">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+
+<tag nummer = "5">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+  
+<tag nummer = "6">
+ <sequence>
+  	<ON>00.15</ON>
+  	<OFF>00.25</OFF>
+  </sequence>
+
+ <sequence>
+  	<ON>10.10</ON>
+  	<OFF>11.30</OFF>
+</sequence>
+  </tag>
+
+
+</dose>
+
+
+</aktionen>

@@ -1,0 +1,20 @@
+{# braucht layout.html    #}
+
+{% extends "layout.html" %}
+{% block title %} Switcher2 Status {% endblock %}
+{% block body %} 
+   <div id="header"  data-width="400">
+		<h1>Switcher 2 Control</h1>
+		<p>Resultat Ausführen</p>
+			<a href="index.html">Home </a> 
+		    <a href="swlog.html">Log </a> 
+			<a href="about.html">About </a> 					
+	</div>
+    <div class="container">
+
+  <p class=red>  Ausgeführt, Returncode: {{returncode}}</>
+    
+      <p class=red>{{dose}} </p>
+   </div>   
+{% endblock %}
+</html>

@@ -1,0 +1,74 @@
+{# braucht layout.html    #}
+
+{% extends "layout.html" %}
+{% block title %} Switcher2 Status {% endblock %}
+{% block body %} 
+
+    <div id="header"  data-width="500">
+		<h1>Switcher 2 Control</h1>
+		<p>Manuell Schalten</p>
+		    <a href="index.html">Home </a> 
+		    <a href="status.html">Status </a> 
+		    <a href="swlog.html">Log </a> 
+		    <a href="wetter.html">Wetter </a> 
+			<a href="about.html">About </a> 
+	</div>
+
+
+<div class="container">
+
+                <ul>
+                    {% for item in statklein -%}
+                    <li>  {{ item }} </li>
+                    {% endfor %}
+                </ul>     
+
+
+<div id="sample">
+<form id="my-form" method="post" action="{{ url_for('ackno') }}">
+<div id="align">
+
+    <fieldset> 
+<p>Zuhause/Nicht Zuhause</p><br />
+<span class="radio"><input type="radio" name="zuhause" value="1" />Zuhause Umschalten</span><br /><br />
+
+    </fieldset>
+    <fieldset>
+ 
+<p>Steckdose wählen:</p><br />
+<span class="radio"><input type="radio" name="seldose" value="1" />Steckdose 1</span><br />
+<span class="radio"><input type="radio" name="seldose" value="2" />Steckdose 2</span><br />
+<span class="radio"><input type="radio" name="seldose" value="3" />Steckdose 3</span><br />
+<span class="radio"><input type="radio" name="seldose" value="4" />Steckdose 4</span><br />
+<span class="radio"><input type="radio" name="seldose" value="0" />Alle Steckdosen</span><br /><br />
+
+
+
+<p>Aktion für diese Steckdose</p><br />
+<span class="radio"><input type="radio" name="select" value="1" />Einschalten</span><br />
+<span class="radio"><input type="radio" name="select" value="2" />Ausschalten</span><br />
+<span class="radio"><input type="radio" name="select" value="3" />Auf Auto zurücksetzen</span><br /><br />
+  
+    </fieldset>
+    
+    <fieldset> 
+<p>Reset Manuell Geschaltete Steckdosen</p><br />
+<span class="radio"><input type="radio" name="reset_manuell" value="1" />Um Mitternacht</span><br />
+<span class="radio"><input type="radio" name="reset_manuell" value="2" />Nie</span><br /><br />
+    </fieldset>
+
+<span><input type="reset" class="button" value="Reset" />
+
+<input class="button" name="saveForm" type="submit" value="Ausführen"></span><br />
+
+</div><!--end div align-->
+</form>
+  
+
+
+
+
+</div>
+
+{% endblock %}
+</html>

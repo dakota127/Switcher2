@@ -1,0 +1,101 @@
+{# braucht layout.html    #}
+
+{% extends "layout.html" %}
+{% block title %} Switcher2 Form {% endblock %}
+{% block body %} 
+
+
+ 
+  
+    		<div id="header"  data-width="400">
+				<h1>Switcher 2</h1>
+				<p>Control Interface<br />
+					for Switcher 2</p>
+				<a href="index.html">Home </a> 
+			</div>		
+
+        					
+
+<form method="post" action="{{ url_for('ackno') }}">
+
+  <header>
+    <h2>Example Responsive Form</h2>
+    <div>This form breaks at 600px and goes from a left-label form to a top-label form. At above 1200px, the labels align right.</div>
+  </header>
+  
+  <div>
+  
+      <fieldset>
+    
+      <legend id="select_1" class="desc">
+        Wähle Dose
+      </legend>
+      
+      <div>
+      	<input id="radioDefault_5" name="schalten" type="hidden" value="">
+      	<div>
+      		<input id="dose1" name="seldose" type="radio" value="1" tabindex="5" >
+      		<label class="choice" for="selektion1_0">Dose 1</label>
+      	</div>
+        <div>
+        	<input id="dose2" name="seldose" type="radio" value="2" tabindex="6">
+        	<label class="choice" for="selektion1_1">Dose 2</label>
+        </div>
+        <div>
+        	<input id="dose3" name="seldose" type="radio" value="3" tabindex="7" >
+        	<label class="choice" for="selektion1_2">Dose 3</label>
+        </div>
+        
+        <div>
+      		<input id="dose4" name="seldose" type="radio" value="4" tabindex="5" >
+      		<label class="choice" for="selektion1_0">Dose 4</label>
+      	</div>
+  
+      </div>
+    </fieldset>
+
+  
+  
+    <fieldset>
+    
+      <legend id="select_1" class="desc">
+        Wähle Aktion für die Dose
+      </legend>
+      
+      <div>
+      	<input id="radioDefault_5" name="schalten" type="hidden" value="">
+      	<div>
+      		<input id="ein" name="select" type="radio" value="1" tabindex="5" >
+      		<label class="choice" for="selektion1_0">Einschalten</label>
+      	</div>
+        <div>
+        	<input id="aus" name="select" type="radio" value="2" tabindex="6">
+        	<label class="choice" for="selektion1_1">Ausschalten</label>
+        </div>
+        <div>
+        	<input id="norm" name="select" type="radio" value="3" tabindex="7" >
+        	<label class="choice" for="selektion1_2">Modus Auto setzen</label>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+  
+ 
+  
+
+  
+  <div>
+		<div>
+  		<input id="saveForm" name="saveForm" type="submit" value="Aktion ausführen">
+    </div>
+	</div>
+  
+</form>
+
+	
+
+		
+
+
+{% endblock %}
+</html>

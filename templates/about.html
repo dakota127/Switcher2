@@ -1,0 +1,34 @@
+{# braucht layout.html    #}
+
+{% extends "layout.html" %}
+{% block title %} Switcher2 About {% endblock %}
+{% block body %} 
+		<div id="wrapper">
+
+    		<div id="header"  data-width="400">
+				<h1>Switcher 2 Control</h1>
+				<p>What the heck is Switcher 2 ?</p>
+					<a href="index.html">Home </a> 
+					<a href="status.html">Status </a> 
+					<a href="swlog.html">Log </a> 
+
+			</div>
+			
+<div class="container">
+			
+
+    <h2>Switcher Info</h2>
+
+Switcher 2 is a Raspberry Pi gadget that is used to switch 
+lights or other appliances on/off when not at home. Up to 4 power outlets are supported, 
+mutiple on/off sequences for every switch per day are possible. The sequence is repeated every week. 
+Switching times (ON/OFF) for every power outlet are defined in 3 XML files. 
+Swichers 2 support 3 seasons and switches unattended to another season if needed. 
+XML files are parsed at reboot. A external switch know as the ‚At Home switch‘ is used to supress switching lights when at homet. 
+A webinterface allows remote control of switcher 2.        
+  
+
+</div>
+{% endblock %}
+</html>
+
