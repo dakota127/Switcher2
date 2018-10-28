@@ -86,9 +86,6 @@ class MQTT_Conn(MyPrint):
         y = cfglist_swi.index("mqtt_keepalive_intervall")  + 1    # suche den Wert im Config-file
         self.mqtt_keepalive_intervall = (int(cfglist_swi[y]))
 
-#  mqtt subscribe topic  holen
-        y = cfglist_swi.index("mqtt_sub_topic")  + 1    # suche den Wert im Config-file
-        self.topic_sub  = cfglist_swi[y].decode()
 
         def my_connect (mqttc, userdata, flags, rc):
             self.myprint (DEBUG_LEVEL1, "MQTT Connect OK, flags: {}, resultcode: {} ".format(str(flags),str(rc)))

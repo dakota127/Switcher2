@@ -24,8 +24,6 @@ cfglist_swi=[
         "mqtt_ipadr" , "",
         "mqtt_port" ,  1883,
         "mqtt_keepalive_intervall" , 45,
-        "mqtt_sub_topic" , "switcher2",
-        "mqtt_pub_topic1", "sonstwas1",
         "mqtt_client_id" , "switcher2",   
 
         "schalter", "00000",                        #
