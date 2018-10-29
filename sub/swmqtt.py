@@ -180,7 +180,7 @@ class MQTT_Conn(MyPrint):
     
         self.topic_list.append (topic_in)
         self.callback_list.append(callback_dazu)
-        self.mqttc.subscribe ("switcher2/in/" + topic_in)
+        self.mqttc.subscribe (topic_in)
         
         self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: mqtt_subscribe_topic topic-liste ist nun:{}".format(self.topic_list))
         
@@ -195,22 +195,11 @@ class MQTT_Conn(MyPrint):
         self.myprint (DEBUG_LEVEL1,"--> MQTT_Conn: my_callback_msg() called, meldung gekommen: topic: {},  payload: {}".format( msg.topic,msg.payload.decode()))
     
     
-        if  msg.topic.find("switcher2") ==  -1:         # nicht für uns
-            self.myprint (DEBUG_LEVEL0, "MQTT_Conn: topic enthält nicht switcher2")
-            return
               
-    #    print (msg.topic)
-    # wir sind an topic3 interessiert
-        try:
-            topic1, topic2, topic3 =  msg.topic.split("/")
-        except:
-            self.myprint (DEBUG_LEVEL0, "MQTT_Conn: topic-split falsch")
-            return
         
         found = False
         for topic , callba in zip(self.topic_list , self.callback_list):
-            if topic == topic3 :
-                found = True
+            if topic == msg.topic :
                 try:
                     callba ( msg.payload.decode() )
                 except:

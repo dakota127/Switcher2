@@ -107,7 +107,7 @@ class Wetter (MyPrint):
         self.dattime = datetime.now().strftime("%d.%m.%Y / %H.%M")
         self.timenow = datetime.now().strftime("%H.%M")  # Zeit der meldung
 
-        self.mqttc.mqtt_subscribe_topic ("wetter" , self.store_wetter_data)                    # subscribe to topic
+        self.mqttc.mqtt_subscribe_topic ("switcher2/in/wetter" , self.store_wetter_data)                    # subscribe to topic
 
 
 #--- Funktion Behandlung Wetterdaten------------------------------
