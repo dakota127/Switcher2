@@ -134,10 +134,10 @@ class Aktor_2 (MyPrint):
         pass
 
 # ***** Function zum setzen GPIO *********************
-    def schalten(self,einaus):
+    def schalten(self,einaus, debug_level_mod):
         global GPIO
   
-        self.myprint (DEBUG_LEVEL2, "--> aktor.schalten called mit: Gpio: %d ein/aus: %s" % (self.mypin, einaus))
+        self.myprint (debug_level_mod, "--> aktor.schalten called mit: Gpio: %d ein/aus: %s" % (self.mypin, einaus))
 #
         if einaus == 1:
             self.rfdevice.tx_code(self.swcode_ein, self.protocoll_ein, self.pulselength_ein, self.codel)

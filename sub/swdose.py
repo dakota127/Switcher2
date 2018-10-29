@@ -57,8 +57,8 @@ class Dose(MyPrint):
         self.testmode = testmode_in
         self.mqttc = mqttc_in                 # instanz mqtt client
         self.mqtt_status = mqtt_status_in
-        self.payload = 1                      # default wert Test Pyload
-        self.publish = 1                      # default wert publish Ja
+        self.msg_variante = 1                      # default wert Test Pyload
+        self.subscribe = 0
         self.e = []
         self.schaltart = 0
         self.debug_level2_mod = DEBUG_LEVEL2
@@ -93,13 +93,17 @@ class Dose(MyPrint):
         if len(self.schalt) > 1:
             self.e=self.schalt.split(",")
         if len(self.e) > 1:
-            self.schaltart=int(self.e[0])
-            self.payload=int(self.e[1])
+            self.schaltart = int(self.e[0])
+            self.msg_variante = int(self.e[1])
         if len(self.e) > 2: 
-            self.publish=int(self.e[2])
+            self.subscribe = int(self.e[2])
             
-        self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {} , MQTT_status: {}".format(self.dosen_nummer,self.schaltart, self.mqtt_status))
-   
+        if  self.schaltart == 3:
+            self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {}, MQTT_status: {}, msg_var:{}, subscribe:{}".format(self.dosen_nummer,self.schaltart, self.mqtt_status, self.msg_variante, self.subscribe))
+        else:
+            self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {}".format(self.dosen_nummer,self.schaltart))
+        
+        
         if self.testmode:
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , nehme Schaltart 1 wegen Testmode !".format(self.dosen_nummer))
             self.schaltart = 1
@@ -117,7 +121,7 @@ class Dose(MyPrint):
             self.myaktor=sub.swaktor_2.Aktor_2(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 3:
             import sub.swaktor_3         
-            self.myaktor=sub.swaktor_3.Aktor_3(self.dosen_nummer,self.debug,self.payload,self.publish,self.path, self.mqttc)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_3.Aktor_3(self.dosen_nummer,self.debug,self.msg_variante,self.subscribe,self.path, self.mqttc)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 4:
             import sub.swaktor_4         
             self.myaktor=sub.swaktor_4.Aktor_4(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
@@ -138,7 +142,7 @@ class Dose(MyPrint):
 
 
         self.myprint (DEBUG_LEVEL2, "dose {} ausschalten (init dose), schaltart: {}".format (self.nummer, self.schaltart))
-        self.myaktor.schalten(0)
+        self.myaktor.schalten(0,  self.debug_level2_mod)
         self.errorcode = 0          # init der Dose ok 
 
 # Funktion dispay_anzahl()  gibt die Anzahl der instantiierten Dosen zurück
@@ -162,7 +166,7 @@ class Dose(MyPrint):
         
         self.status_extern=0
         self.myprint (self.debug_level2_mod, "dose {} ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
-        self.myaktor.schalten(0)
+        self.myaktor.schalten(0,  self.debug_level2_mod)
 
 # ---- Funktion set_dosen_nichtzuhause ------------------------------
 #      schaltet die Dose ein, falls interner Status 1 ist - aber nicht, wenn Modus =manuell ist 
@@ -175,11 +179,11 @@ class Dose(MyPrint):
         if self.status_intern==1:
             self.status_extern=1
             self.myprint (self.debug_level2_mod, "dose {} einschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
-            self.myaktor.schalten(1)
+            self.myaktor.schalten(1,  self.debug_level2_mod)
         else:
             self.status_extern=0
             self.myprint (self.debug_level2_mod, "dose {} ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
-            self.myaktor.schalten(0)
+            self.myaktor.schalten(0,  self.debug_level2_mod)
 
 
 # ---- Funktion set_dosen_manuell ------------------------------
@@ -192,7 +196,7 @@ class Dose(MyPrint):
         self.status_extern = how
         self.modus = 1
         self.myprint (self.debug_level2_mod, "dose {} manuell schalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
-        self.myaktor.schalten(how)
+        self.myaktor.schalten(how,  self.debug_level2_mod)
         
 # ---- Funktion reset manuell ------------------------------
 #   setzt Modus auf Auto (0) und schaltet Dose gemäss dem aktuellen internen Status
@@ -205,11 +209,11 @@ class Dose(MyPrint):
         if self.status_intern == 1:   
             self.status_extern = 1
             self.myprint (self.debug_level2_mod , "dose {} reset_manuell: einschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
-            self.myaktor.schalten(1)
+            self.myaktor.schalten(1,  self.debug_level2_mod)
         else:
             self.status_extern = 0
             self.myprint (self.debug_level2_mod , "dose {} reset_manuell: ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
-            self.myaktor.schalten(0)
+            self.myaktor.schalten(0,  self.debug_level2_mod)
         
          
  
@@ -227,7 +231,7 @@ class Dose(MyPrint):
         if self.modus==0:           # Nur wirklich schalten, wenn modus auto ist - externer status nachführen
             self.status_extern=how
             self.myprint (DEBUG_LEVEL2,  "dose {} auto schalten {}".format (self.dosen_nummer, how))
-            self.myaktor.schalten(how)
+            self.myaktor.schalten(how,  self.debug_level2_mod)
 
 # ---- Funktion set_auto_virtuell,  ------------------------------
 #   schaltet dose nicht, setzt aber internen Status gemäss how

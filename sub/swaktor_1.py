@@ -100,10 +100,10 @@ class Aktor_1 (MyPrint):
 
 
 # ***** Function zum setzen GPIO *********************
-    def schalten(self,einaus):
+    def schalten(self,einaus, debug_level_mod):
         global GPIO
   
-        self.myprint (DEBUG_LEVEL2, "--> aktor.schalten called mit: Gpio: %d ein/aus: %s" % (self.mypin, einaus))
+        self.myprint (debug_level_mod, "--> aktor.schalten called mit: Gpio: %d ein/aus: %s" % (self.mypin, einaus))
 #
         if einaus== 1:
             GPIO.output(self.mypin, True)         # dosen muss minus 1 sein wegen List index Dosen

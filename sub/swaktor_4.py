@@ -88,10 +88,10 @@ class Aktor_4 (MyPrint):
 
 
 # ***** Function zum setzen GPIO *********************
-    def schalten(self,einaus):
+    def schalten(self,einaus, debug_level_mod):
         global GPIO
         self.what=1
-        self.myprint (DEBUG_LEVEL2, "--> aktor4.schalten called mit: Gpio: %d ein/aus: %s" % ( Aktor_4.Pins[self.dosennummer],einaus))
+        self.myprint (debug_level_mod, "--> aktor4.schalten called mit: Gpio: %d ein/aus: %s" % ( Aktor_4.Pins[self.dosennummer],einaus))
 #
 # parameter what indicates: 1: sender für waittime_senden einschalten und danch wieder ausschalten
 #                           0: sender nur ausschalten (nötig bei Abbruch des programms durch ctrl-c)

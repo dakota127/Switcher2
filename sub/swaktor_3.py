@@ -42,13 +42,13 @@ class Aktor_3 (MyPrint):
     ' klasse aktor '
     aktorzahler=0               # Class Variable
     
-    def __init__(self, dosennummer,debug_in, msgtyp_in, publish_in, path_in, mqtt_client_in):  # Init Funktion
+    def __init__(self, dosennummer,debug_in, meldungs_typ, subscribe, path_in, mqtt_client_in):  # Init Funktion
         self.errorcode = 8           # init wert beliebig aber not zero
         self.nummer = Aktor_3.aktorzahler
         self.debug = debug_in
         self.mqttc = mqtt_client_in
-        self.msgtyp = msgtyp_in             # typ der mqtt meldung und topic
-        self.publish = publish_in
+        self.meldungs_variante = meldungs_typ             # typ der mqtt meldung und topic
+        self.subscribe_noetig = subscribe
         self.path = path_in          # pfad  main switcher
 
         self.dosennummer = dosennummer            # arbeite für diese Dose (1 bis n)
@@ -60,7 +60,7 @@ class Aktor_3 (MyPrint):
         self.action_type = "mqtt"     # welche art Schalten ist dies hier
         self.broker_ok = False
         self.how = ''
-        self.myprint (DEBUG_LEVEL1, "--> aktor_3 {} aktor_init called fuer Dose {} Publish: {}".format (self.nummer,self.dosennummer,self.publish))
+        self.myprint (DEBUG_LEVEL1, "--> aktor_3 {} aktor_init called fuer Dose {}, msg_type:{}, subscribe:{}".format (self.nummer,self.dosennummer,self.meldungs_variante, self.subscribe_noetig))
         Aktor_3.aktorzahler += 1            # erhögen aktorzähler
 
  # nun mqtt Brokder data aus config holen
@@ -89,41 +89,42 @@ class Aktor_3 (MyPrint):
         pass
 
 # ***** Function zum setzen GPIO *********************
-    def schalten(self,einaus):
+    def schalten(self,einaus, debug_level_mod):
       
-        msg = ""
+        payload = ""
         
-        self.myprint (DEBUG_LEVEL2, "--> aktor3.schalten called mit ein/aus: {} ".format(einaus))
+        self.myprint (DEBUG_LEVEL0, "--> aktor3.schalten called mit ein/aus: {} ".format(einaus))
         
 #
 #       WICHTIG:
-#       self.msgtyp == 1  is for testing only 
-#       self.msgtyp == 2 ist für sonof switches , 
+#       self.meldungs_variante == 1  is for testing only 
+#       self.meldungs_variante == 2 ist für sonof switches , 
 #       other smart switches might use other payloads <<<<------------- 
 #       subscriber script swmqtt_sub.py zeigt meldung an
 #
         self.how = OFFON[einaus]        # 'ON' oder 'OFF' setzen, wird gebraucht für Payload
 
-        if self.msgtyp == 1 :           # mqtt Meldungstyp für Testaufbau mit ESP8266  
-            self.mqtt_topic = TOPIC[self.msgtyp]
-            msg = str(self.dosennummer) + self.how
+        if self.meldungs_variante == 1 :           # mqtt Meldungstyp für Testaufbau mit ESP8266  
+            self.mqtt_topic = TOPIC[self.meldungs_variante]
+            payload = str(self.dosennummer) + self.how
 
-        elif self.msgtyp == 2:          # mqtt typ 2 für sonof switches    
-            self.mqtt_topic = TOPIC[self.msgtyp]
-            first, second = TOPIC[self.msgtyp].split('%')
+        elif self.meldungs_variante == 2:          # mqtt typ 2 für sonof switches    
+            self.mqtt_topic = TOPIC[self.meldungs_variante]
+            first, second = TOPIC[self.meldungs_variante].split('%')
             self.mqtt_topic = first + str(self.dosennummer) + second
-            msg = self.how              # 'ON' oder 'OFF'
+            payload = self.how              # 'ON' oder 'OFF'
 
-        elif self.msgtyp == 3:           # mqtt typ 3  vorläufig wie typ 1 (for future use9)      
-            self.mqtt_topic = TOPIC[self.msgtyp]
-            msg = str(self.dosennummer) + self.how
+        elif self.meldungs_variante == 3:           # mqtt typ 3  vorläufig wie typ 1 (for future use9)      
+            self.mqtt_topic = TOPIC[self.meldungs_variante]
+            payload = str(self.dosennummer) + self.how
                    
                
         
         if self.broker_ok:          # nur senedne, wenn mqtt connection ok
-            self.myprint (DEBUG_LEVEL2, "--> aktor3. publish mqtt Topic :{}, Msg: {}".format(self.mqtt_topic, msg))
+                                    # wir verwenden für loggin den mod debuglevel von der dose
+            self.myprint (debug_level_mod, "--> aktor3. publish mqtt Topic:{} , Payload: {}".format(self.mqtt_topic, payload))
         
-            self.mqttc.mypublish(self.mqtt_topic, msg)
+            self.mqttc.mypublish(self.mqtt_topic, payload)
    
  
 #-------------------------------------------------
