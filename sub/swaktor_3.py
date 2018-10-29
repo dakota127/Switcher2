@@ -33,7 +33,9 @@ DEBUG_LEVEL2 = 2
 DEBUG_LEVEL3 = 3
 
 OFFON = ['OFF','ON']
-TOPIC = ['','switcher2/out', 'cmnd/sonoff%/POWER',' ',' ']  # 4 Topics fuer 4 verschiedene WiFi Schalter
+TOPIC_P = ['','switcher2/out', 'cmnd/sonoff%/POWER',' ',' ']  # 4 Topics Publish fuer 4 verschiedene WiFi Schalter
+                                                        # item 0 not used !!
+TOPIC_S = ['','switcher2/in', 'stat/sonoff%/POWER',' ',' ']  # 4 Topics  Subscribe fuer 4 verschiedene WiFi Schalter
                                                         # item 0 not used !!
 #----------------------------------------------------
 # Class Definition Aktor, erbt vom MyPrint
@@ -42,7 +44,7 @@ class Aktor_3 (MyPrint):
     ' klasse aktor '
     aktorzahler=0               # Class Variable
     
-    def __init__(self, dosennummer,debug_in, meldungs_typ, subscribe, path_in, mqtt_client_in):  # Init Funktion
+    def __init__(self, dosennummer,debug_in, meldungs_typ, subscribe, path_in, mqtt_client_in, callback_dosen):  # Init Funktion
         self.errorcode = 8           # init wert beliebig aber not zero
         self.nummer = Aktor_3.aktorzahler
         self.debug = debug_in
@@ -50,7 +52,7 @@ class Aktor_3 (MyPrint):
         self.meldungs_variante = meldungs_typ             # typ der mqtt meldung und topic
         self.subscribe_noetig = subscribe
         self.path = path_in          # pfad  main switcher
-
+        self.dosencallback = callback_dosen
         self.dosennummer = dosennummer            # arbeite für diese Dose (1 bis n)
         self.mqtt_broker_ip = ""
         self.mqtt_port = 0
@@ -75,7 +77,17 @@ class Aktor_3 (MyPrint):
         self.myprint (DEBUG_LEVEL2, "--> aktor_3 {} aktor_init : dose {} configfile read {}".format (self.nummer,self.dosennummer, cfglist_akt))
 
         self.broker_ok = True
-        
+  
+        if self.subscribe_noetig > 0:       #   config verlangt, dass wir ein subscribe absetzen, damit die statusmeldungen
+                                            #   von smart switches (sonoff) empfangen werden können
+                                            #   NOTE: die Callback-Funktione liegt in der Dosenklasse, sie meldet uns
+                                            #   den pointer zur funktion
+            first, second = TOPIC_S[self.meldungs_variante].split('%')
+            topic_subscribe = first + str(self.dosennummer) + second
+  
+            self.mqttc.mqtt_subscribe_topic (topic_subscribe , self.dosencallback)     # subscribe to topic
+            self.myprint (DEBUG_LEVEL0,  "--> aktor3 mqtt subscription, topic: {} ".format(topic_subscribe))
+    
         pass
 
 # ************************************************** 		
@@ -87,6 +99,8 @@ class Aktor_3 (MyPrint):
         self.myprint (DEBUG_LEVEL2, "--> aktor_3 del called")
     
         pass
+
+
 
 # ***** Function zum setzen GPIO *********************
     def schalten(self,einaus, debug_level_mod):
@@ -105,17 +119,17 @@ class Aktor_3 (MyPrint):
         self.how = OFFON[einaus]        # 'ON' oder 'OFF' setzen, wird gebraucht für Payload
 
         if self.meldungs_variante == 1 :           # mqtt Meldungstyp für Testaufbau mit ESP8266  
-            self.mqtt_topic = TOPIC[self.meldungs_variante]
+            self.mqtt_topic = TOPIC_P[self.meldungs_variante]
             payload = str(self.dosennummer) + self.how
 
         elif self.meldungs_variante == 2:          # mqtt typ 2 für sonof switches    
-            self.mqtt_topic = TOPIC[self.meldungs_variante]
-            first, second = TOPIC[self.meldungs_variante].split('%')
+ #           self.mqtt_topic = TOPIC_P[self.meldungs_variante]
+            first, second = TOPIC_P[self.meldungs_variante].split('%')
             self.mqtt_topic = first + str(self.dosennummer) + second
             payload = self.how              # 'ON' oder 'OFF'
 
         elif self.meldungs_variante == 3:           # mqtt typ 3  vorläufig wie typ 1 (for future use9)      
-            self.mqtt_topic = TOPIC[self.meldungs_variante]
+            self.mqtt_topic = TOPIC_P[self.meldungs_variante]
             payload = str(self.dosennummer) + self.how
                    
                

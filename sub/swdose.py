@@ -29,12 +29,14 @@ from sub.swcfg_switcher import cfglist_dos       # struktur der Dose Config im C
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
 from sub.configread import ConfigRead
 import os
+from datetime import date, datetime, timedelta
 
 # -- Konstanten -----------------------------
 DEBUG_LEVEL0 = 0
 DEBUG_LEVEL1 = 1
 DEBUG_LEVEL2 = 2
-DEBUG_LEVEL3 = 3                        
+DEBUG_LEVEL3 = 3      
+WAIT_STATUS_MELDUNG = 30                  
 #--------------------------------------------------
 class Dose(MyPrint):
     ' klasse dose '
@@ -59,6 +61,7 @@ class Dose(MyPrint):
         self.mqtt_status = mqtt_status_in
         self.msg_variante = 1                      # default wert Test Pyload
         self.subscribe = 0
+        self.time_last_aktion = 0               
         self.e = []
         self.schaltart = 0
         self.debug_level2_mod = DEBUG_LEVEL2
@@ -121,7 +124,7 @@ class Dose(MyPrint):
             self.myaktor=sub.swaktor_2.Aktor_2(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 3:
             import sub.swaktor_3         
-            self.myaktor=sub.swaktor_3.Aktor_3(self.dosen_nummer,self.debug,self.msg_variante,self.subscribe,self.path, self.mqttc)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_3.Aktor_3(self.dosen_nummer,self.debug,self.msg_variante,self.subscribe,self.path, self.mqttc, self.aktor_callback)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 4:
             import sub.swaktor_4         
             self.myaktor=sub.swaktor_4.Aktor_4(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
@@ -140,6 +143,7 @@ class Dose(MyPrint):
             self.myprint (DEBUG_LEVEL1,  "Aktor: {} meldet Fehler {}".format (self.dosen_nummer, self.myaktor.errorcode))	 
             raise RuntimeError('---> Switcher ernsthafter Fehler, check switcher2.log <----')
 
+        self.time_last_aktion =  datetime.now()         # zeit merken 
 
         self.myprint (DEBUG_LEVEL2, "dose {} ausschalten (init dose), schaltart: {}".format (self.nummer, self.schaltart))
         self.myaktor.schalten(0,  self.debug_level2_mod)
@@ -163,6 +167,8 @@ class Dose(MyPrint):
         self.zuhause=True
         if self.modus==1: 
             return            # wenn modus manuell mach nichts weiter
+
+        self.time_last_aktion =  datetime.now()         # zeit merken 
         
         self.status_extern=0
         self.myprint (self.debug_level2_mod, "dose {} ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
@@ -176,6 +182,9 @@ class Dose(MyPrint):
         self.zuhause=False
         if self.modus == 1: 
             return   # manuell, wir machen nichts
+
+        self.time_last_aktion =  datetime.now()         # zeit merken 
+            
         if self.status_intern==1:
             self.status_extern=1
             self.myprint (self.debug_level2_mod, "dose {} einschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
@@ -195,6 +204,8 @@ class Dose(MyPrint):
     
         self.status_extern = how
         self.modus = 1
+        self.time_last_aktion =  datetime.now()         # zeit merken 
+
         self.myprint (self.debug_level2_mod, "dose {} manuell schalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
         self.myaktor.schalten(how,  self.debug_level2_mod)
         
@@ -204,6 +215,7 @@ class Dose(MyPrint):
         self.myprint (self.debug_level2_mod,  "--> dose {} reset_manuell called, modus: {}, status_intern: {}".format (self.dosen_nummer, self.modus, self.status_intern))
         if self.modus == 0:
             return                  # wir behandlen nur Dosen mit modus manuell
+        self.time_last_aktion =  datetime.now()         # zeit merken 
             
         self.modus = 0
         if self.status_intern == 1:   
@@ -214,8 +226,8 @@ class Dose(MyPrint):
             self.status_extern = 0
             self.myprint (self.debug_level2_mod , "dose {} reset_manuell: ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
             self.myaktor.schalten(0,  self.debug_level2_mod)
-        
-         
+  
+          
  
 # ---- Funktion set_auto,  ------------------------------
 #   schaltet dose gemäss how, jedoch nur, wenn Modus 'Auto' ist (bei Modus 'Manuell' wird nicht geschaltet)  
@@ -230,6 +242,8 @@ class Dose(MyPrint):
         
         if self.modus==0:           # Nur wirklich schalten, wenn modus auto ist - externer status nachführen
             self.status_extern=how
+            self.time_last_aktion =  datetime.now()         # zeit merken 
+
             self.myprint (DEBUG_LEVEL2,  "dose {} auto schalten {}".format (self.dosen_nummer, how))
             self.myaktor.schalten(how,  self.debug_level2_mod)
 
@@ -242,6 +256,33 @@ class Dose(MyPrint):
         self.myprint (DEBUG_LEVEL2,  "--> dose {} set_auto_virtuell called, how: {}  modus: {}".format (self.dosen_nummer,how,self.modus))
    
         self.status_intern=how      # interner status wird in jedem Fall nachgeführt
+
+
+# ---- Callback Aktor ------------------------------
+#   der smart switch hat eine statusmeldung (ON oder OFF) gesendet.
+#   Voraussetzung: der smart switch sendet immer eine statusmeldung, sowohl wenn vom switcher geschaltet,
+#   als auch, wenn von Hand an der dose geschaltet. Wir müssen die beiden Dinge aber irgendwie unterscheiden.
+#   dies machen wir so:
+#   statusmeldungen, die innerhalb von 30 sekunden kommen, nachdem switcher2 selbst geschaltet hat,
+#   werden ignoriert. Dies, weil der Switcher (also die Dose) den internen/externen Status bereits selbst gesetzt hat.
+#   statusmeldungen hingegen, die mehr als 30 sekunden später eintreffen, werden betrachtet als von HAND AN DER DOSE
+#   geschaltet. Dies kann ja irgendwann passieren. In diesen Fall wird der status der dose verändert.
+#   ist etwas krude, tut aber den Dienst.
+    def aktor_callback(self,payload_in):
+        
+        time_new =  datetime.now() 
+        delta = time_new - self.time_last_aktion
+        delta = int(delta.seconds)     # delta in sekunden
+        self.myprint (DEBUG_LEVEL0,  "--> dose {} aktor_callback() called, payload: {}, zeit seit letzter aktion: {} sek.".format (self.dosen_nummer, payload_in, delta))
+        if delta > WAIT_STATUS_MELDUNG:
+        
+            if payload_in == "ON" :
+                self.status_extern = 1 
+                self.modus = 1
+            if payload_in == "OFF" :
+                self.status_extern = 0 
+                self.modus = 1
+           
  
 
 # ---- Funktion set Zimmer ------------------------------
