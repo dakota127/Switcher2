@@ -13,7 +13,7 @@
     
     Pin 13 hat LED, welche Dose simuliert
 
-    Script subskribiert Topic switcher2 
+    Script subskribiert Topic cmnd/diyN/POWER 
 
     kann als Beispiel für eigene Weuterentwicklung dienen.
     Ideen von hier (mit Dank)
@@ -45,6 +45,15 @@ const int pin2 = 14;   // Dosenselect 2
 const char* ssid = "P-NETGEAR";           // WLAN SSID
 const char* password = "hermannelsa";    // WLAN Passwort
 const char* ip_adr_broker = "192.168.1.145";
+const char* sub_topic1 = "cmnd/diy1/POWER";
+const char* sub_topic2 = "cmnd/diy2/POWER";
+const char* sub_topic3 = "cmnd/diy3/POWER";
+const char* sub_topic4 = "cmnd/diy4/POWER";
+const char* pub_topic1 = "stat/diy1/POWER";
+const char* pub_topic2 = "stat/diy2/POWER";
+const char* pub_topic3 = "stat/diy3/POWER";
+const char* pub_topic4 = "stat/diy4/POWER";
+const char*   publish_topic;
 /* diese Werte anpassen   <<--------- */
 
 
@@ -145,27 +154,19 @@ void setup_wifi() {
 
 void schalten (unsigned int dos, unsigned int how)
 {
-  Dose_struct dose;
-  Dose_struct dose2;
-// feststellen, ob Meldung für mich ist (Dose)
- if (dos != dosennummer) 
-    {
-      Serial.println("Nicht für mich !");
-      return;
-    }
-     Serial.println("Oh, ist ja für mich !");
-   // Led ein oder ausschalten
+  Dose_struct dose;       /* Struct zum Schreiben nach EEPROM  */
+  Dose_struct dose2;      /* Struct zum Lesen aus EEPROM  */
+  
  switch (how)
  { 
   
   case 0:
+    Serial.println("Muss Led einschalten");
     digitalWrite(led, LOW); 
-    Serial.println("Muss Led ausschalten");
     break;
   
   case 1:
     digitalWrite(led, HIGH);   // LED on
-    Serial.println("Muss Led einschalten");
     // Store structure (struct) to EEPROM 
     break;
     
@@ -190,60 +191,36 @@ void schalten (unsigned int dos, unsigned int how)
   Serial.println("");
     
 }
+
+
 //------------------------------------------------
-void callback(char* topic, byte* payload, unsigned int length) 
-{
-  static char input[3];
-  int p;
-  int dosein;
-  int einaus;
-  
-  
+void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println  ("Message eingetroffen-------------");
   Serial.print    ("Topic ist : [");
   Serial.print    (topic);
   Serial.println  ("]");
-  Serial.print    ("Payload Länge ist: ");
-  Serial.println  (length);
 
-  
-  switch (length)
-  {
-  case 0: 
-    Serial.println("No payload, lenght is null");
-    break;
-  
-  case 3:                   // so muss es sein
-  case 4:
-    input[0]=payload[0];
-    input[1] = '\0';        // gültigen C string erstellen
-    dosein = atoi( input );
-    Serial.print    ("Betrifft Dose: ");
-    Serial.println  (dosein);
-
-    input[0]=payload[1];
-    input[1]=payload[2];
-    input[2] = '\0';
-    if (input[1] == 'F') { einaus = 0;}
-    else {einaus=1;}
-    
- 
-    Serial.print  ("Ein oder Aus: ");
-    Serial.println(einaus);
-    break;
-    
-   default:
-   Serial.print("ERROR,Länge Payload: ");
-   Serial.println(length);
-   return;
+  Serial.print    ("Payload ist : [");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
   }
- 
-
-    schalten(dosein,einaus);
+  Serial.println("]");
+  Serial.println("Publish Topic: ");
+  Serial.println (publish_topic);
+    
+        if (!strncmp((char *)payload, "ON", length)) {
+            Serial.println("Muss Led einschalten");
+            digitalWrite(led, HIGH);    
+            client.publish(publish_topic, "ON", true);
+        } else if (!strncmp((char *)payload, "OFF", length)) {
+            Serial.println("Muss Led ausschalten");
+            digitalWrite(led, LOW);    
+           client.publish(publish_topic, "OFF", true);
+        }
   
-  Serial.println();
-} //end callback
-//------------------------------------------------
+}
+
+//--- End Callback ---------------------------------------------
 
 
 //------------------------------------------------
@@ -266,7 +243,16 @@ void reconnect() {
     {
       Serial.println("connected to broker");
      //once connected to MQTT broker, subscribe command if any
-      client.subscribe("switcher2/out");
+     if (dosennummer == 3) {
+        client.subscribe(sub_topic3);
+        Serial.print ("Subscribe Topic: ");
+        Serial.println(sub_topic3);
+     }
+     else {
+        client.subscribe(sub_topic4);
+        Serial.print ("Subscribe Topic: ");
+        Serial.println(sub_topic4);
+     }
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -302,15 +288,31 @@ void setup() {
  
 
   if (stat_pin1 == LOW and stat_pin2 == LOW)
+   {
     dosennummer = 1;
+    publish_topic = pub_topic1;
+  }
+    
   if (stat_pin1 == LOW and stat_pin2 == HIGH)
+   {
     dosennummer = 2;
+    publish_topic = pub_topic2;
+  }
+  
   if (stat_pin1 == HIGH and stat_pin2 == LOW)
+  {
     dosennummer = 3;
-   if (stat_pin1 == HIGH and stat_pin2 == HIGH)
+    publish_topic = pub_topic3;
+  }
+  if (stat_pin1 == HIGH and stat_pin2 == HIGH)
+  {
     dosennummer = 4;
+    publish_topic = pub_topic4;
+  }
+   
    Serial.print ("Ich bin Dose: ");
    Serial.println (dosennummer);
+
 
    Serial.println("Read struct dose");
   // Read structure (struct) from EEPROM
@@ -340,20 +342,7 @@ void loop() {
   if (now - time_lastMsg > 24000) {
   	Serial.println("keep myself busy...");
      time_lastMsg = now;
- 
-     String msg="bin immer noch da...";
-     char topic[20];
-     sprintf(topic,"switcher2/in/dose%d",dosennummer);
-
-     
-     char message[40];
-     msg.toCharArray(message,40);
-     Serial.println("Sende dies zum MQTT Broker:");
-     Serial.print(topic);
-     Serial.print(" ");
-     Serial.println(message);
-     //publish sensor data to MQTT broker
-      client.publish(topic, message);
+  
   }
 }
 
