@@ -33,9 +33,9 @@ DEBUG_LEVEL2 = 2
 DEBUG_LEVEL3 = 3
 
 OFFON = ['OFF','ON']
-TOPIC_P = ['','switcher2/out', 'cmnd/sonoff%/POWER',' ',' ']  # 4 Topics Publish fuer 4 verschiedene WiFi Schalter
+TOPIC_P = ['','cmnd/diy%/POWER', 'cmnd/sonoff%/POWER',' ',' ']  # 4 Topics Publish fuer 4 verschiedene WiFi Schalter
                                                         # item 0 not used !!
-TOPIC_S = ['','switcher2/in', 'stat/sonoff%/POWER',' ',' ']  # 4 Topics  Subscribe fuer 4 verschiedene WiFi Schalter
+TOPIC_S = ['','stat/diy%/POWER', 'stat/sonoff%/POWER',' ',' ']  # 4 Topics  Subscribe fuer 4 verschiedene WiFi Schalter
                                                         # item 0 not used !!
 #----------------------------------------------------
 # Class Definition Aktor, erbt vom MyPrint
@@ -118,11 +118,11 @@ class Aktor_3 (MyPrint):
 #
         self.how = OFFON[einaus]        # 'ON' oder 'OFF' setzen, wird gebraucht für Payload
 
-        if self.meldungs_variante == 1 :           # mqtt Meldungstyp für Testaufbau mit ESP8266  
-            self.mqtt_topic = TOPIC_P[self.meldungs_variante]
-            payload = str(self.dosennummer) + self.how
+#        if self.meldungs_variante == 1 :           # mqtt Meldungstyp für Testaufbau mit ESP8266  
+#            self.mqtt_topic = TOPIC_P[self.meldungs_variante]
+#            payload = str(self.dosennummer) + self.how
 
-        elif self.meldungs_variante == 2:          # mqtt typ 2 für sonof switches    
+        if self.meldungs_variante == 2 or self.meldungs_variante == 1:          # mqtt typ 2 für sonof switches    
  #           self.mqtt_topic = TOPIC_P[self.meldungs_variante]
             first, second = TOPIC_P[self.meldungs_variante].split('%')
             self.mqtt_topic = first + str(self.dosennummer) + second
