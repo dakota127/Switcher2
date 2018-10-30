@@ -22,7 +22,7 @@
     Peter K. Boxler, September 2018
 /* --------------------------------------------------*/
 
-#define ESP8266
+// #define ESP8266
 
 /* select ESP8266 or ESP32 mittels define */
 
@@ -31,11 +31,13 @@
 const int led = 13;   // use 13 für Huzzah 6288 
 const int pin1 = 12;   // Dosenselect 1          
 const int pin2 = 14;   // Dosenselect 2   
+const int interruptPin = 15; //    für taster
 #else
 #include <WiFi.h>
 const int led = 13;   // andere Werte für esp32 ! 
 const int pin1 = 12;   // Dosenselect 1          
-const int pin2 = 14;   // Dosenselect 2   
+const int pin2 = 14;   // Dosenselect 2  
+const int interruptPin = 0; //Flash button on board     für  
 #endif
 
 #include <PubSubClient.h>
@@ -45,14 +47,14 @@ const int pin2 = 14;   // Dosenselect 2
 const char* ssid = "P-NETGEAR";           // WLAN SSID
 const char* password = "hermannelsa";    // WLAN Passwort
 const char* ip_adr_broker = "192.168.1.145";
-const char* sub_topic1 = "cmnd/diy1/POWER";
-const char* sub_topic2 = "cmnd/diy2/POWER";
-const char* sub_topic3 = "cmnd/diy3/POWER";
-const char* sub_topic4 = "cmnd/diy4/POWER";
-const char* pub_topic1 = "stat/diy1/POWER";
-const char* pub_topic2 = "stat/diy2/POWER";
-const char* pub_topic3 = "stat/diy3/POWER";
-const char* pub_topic4 = "stat/diy4/POWER";
+const char* sub_topic1 = "cmnd/dose1/POWER";
+const char* sub_topic2 = "cmnd/dose2/POWER";
+const char* sub_topic3 = "cmnd/dose3/POWER";
+const char* sub_topic4 = "cmnd/dose4/POWER";
+const char* pub_topic1 = "stat/dose1/POWER";
+const char* pub_topic2 = "stat/dose2/POWER";
+const char* pub_topic3 = "stat/dose3/POWER";
+const char* pub_topic4 = "stat/dose4/POWER";
 const char*   publish_topic;
 /* diese Werte anpassen   <<--------- */
 
@@ -65,6 +67,7 @@ const char* password_mqtt="tabstop";
 int stat_pin1;
 int stat_pin2;
 int dosennummer;
+int dosenstatus;        // variable für den aktuellen Status der Dose 1=ein, 0= aus
 long time_lastMsg = 0;
 
 // IP-Adr des MQTT Brokers  
@@ -152,7 +155,7 @@ void setup_wifi() {
 }
 //------------------------------------------------
 
-void schalten (unsigned int dos, unsigned int how)
+void schalten ( unsigned int how)
 {
   Dose_struct dose;       /* Struct zum Schreiben nach EEPROM  */
   Dose_struct dose2;      /* Struct zum Lesen aus EEPROM  */
@@ -161,12 +164,17 @@ void schalten (unsigned int dos, unsigned int how)
  { 
   
   case 0:
-    Serial.println("Muss Led einschalten");
+    Serial.println("Muss Led ausschalten");
     digitalWrite(led, LOW); 
+    dosenstatus = 0;
+    client.publish(publish_topic, "OFF", true);
     break;
   
   case 1:
+    Serial.println("Muss Led einschalten");
     digitalWrite(led, HIGH);   // LED on
+    dosenstatus = 1;
+    client.publish(publish_topic, "ON", true);
     // Store structure (struct) to EEPROM 
     break;
     
@@ -191,7 +199,13 @@ void schalten (unsigned int dos, unsigned int how)
   Serial.println("");
     
 }
-
+//------------------------------------------------
+//This partgram get executed when interrupt is occures i.e.change of input state
+void handleInterrupt() { 
+    Serial.println("Interrupt Detected"); 
+    if (dosenstatus == 0)  schalten ( 1);
+    else schalten (0);
+}
 
 //------------------------------------------------
 void callback(char *topic, byte *payload, unsigned int length) {
@@ -209,13 +223,11 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println (publish_topic);
     
         if (!strncmp((char *)payload, "ON", length)) {
-            Serial.println("Muss Led einschalten");
-            digitalWrite(led, HIGH);    
-            client.publish(publish_topic, "ON", true);
+           schalten (1);
+
         } else if (!strncmp((char *)payload, "OFF", length)) {
-            Serial.println("Muss Led ausschalten");
-            digitalWrite(led, LOW);    
-           client.publish(publish_topic, "OFF", true);
+          schalten(0); 
+
         }
   
 }
@@ -281,11 +293,13 @@ void setup() {
   pinMode(led, OUTPUT);
   pinMode(pin1, INPUT);
   pinMode(pin2, INPUT);
-  
+  pinMode(interruptPin, INPUT_PULLUP);
+    
   stat_pin1 = digitalRead(pin1);
   stat_pin2 = digitalRead(pin2);
   digitalWrite(led, LOW);         // led aus bei start
- 
+
+  attachInterrupt(digitalPinToInterrupt(interruptPin), handleInterrupt, CHANGE);
 
   if (stat_pin1 == LOW and stat_pin2 == LOW)
    {
@@ -323,7 +337,8 @@ void setup() {
     }
   else {
     Serial.println("alte Werte gefunden, also entsprechend schalten");
-    schalten(dose2.dosennummer,dose2.einaus);
+    dosennummer = dose2.dosennummer;
+    schalten(dose2.einaus);
     
   }
    
@@ -340,7 +355,7 @@ void loop() {
   long now = millis();
   
   if (now - time_lastMsg > 24000) {
-  	Serial.println("keep myself busy...");
+  	Serial.println("waiting for work...");
      time_lastMsg = now;
   
   }

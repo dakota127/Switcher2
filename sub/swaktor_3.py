@@ -33,9 +33,9 @@ DEBUG_LEVEL2 = 2
 DEBUG_LEVEL3 = 3
 
 OFFON = ['OFF','ON']
-TOPIC_P = ['','cmnd/diy%/POWER', 'cmnd/sonoff%/POWER',' ',' ']  # 4 Topics Publish fuer 4 verschiedene WiFi Schalter
+TOPIC_P = ['','cmnd/dose%/POWER', 'cmnd/sonoff%/POWER','cmnd/future',' ']  # 4 Topics Publish fuer 4 verschiedene WiFi Schalter
                                                         # item 0 not used !!
-TOPIC_S = ['','stat/diy%/POWER', 'stat/sonoff%/POWER',' ',' ']  # 4 Topics  Subscribe fuer 4 verschiedene WiFi Schalter
+TOPIC_S = ['','stat/dose%/POWER', 'stat/sonoff%/POWER','stat/future',' ']  # 4 Topics  Subscribe fuer 4 verschiedene WiFi Schalter
                                                         # item 0 not used !!
 #----------------------------------------------------
 # Class Definition Aktor, erbt vom MyPrint
@@ -111,16 +111,13 @@ class Aktor_3 (MyPrint):
         
 #
 #       WICHTIG:
-#       self.meldungs_variante == 1  is for testing only 
+#       self.meldungs_variante == 1 ist für Testaufbau mit esp8266 
 #       self.meldungs_variante == 2 ist für sonof switches , 
 #       other smart switches might use other payloads <<<<------------- 
 #       subscriber script swmqtt_sub.py zeigt meldung an
 #
         self.how = OFFON[einaus]        # 'ON' oder 'OFF' setzen, wird gebraucht für Payload
 
-#        if self.meldungs_variante == 1 :           # mqtt Meldungstyp für Testaufbau mit ESP8266  
-#            self.mqtt_topic = TOPIC_P[self.meldungs_variante]
-#            payload = str(self.dosennummer) + self.how
 
         if self.meldungs_variante == 2 or self.meldungs_variante == 1:          # mqtt typ 2 für sonof switches    
  #           self.mqtt_topic = TOPIC_P[self.meldungs_variante]
@@ -128,7 +125,7 @@ class Aktor_3 (MyPrint):
             self.mqtt_topic = first + str(self.dosennummer) + second
             payload = self.how              # 'ON' oder 'OFF'
 
-        elif self.meldungs_variante == 3:           # mqtt typ 3  vorläufig wie typ 1 (for future use9)      
+        elif self.meldungs_variante == 3:           # mqtt typ 3  (for future use9)      
             self.mqtt_topic = TOPIC_P[self.meldungs_variante]
             payload = str(self.dosennummer) + self.how
                    
