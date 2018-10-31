@@ -31,7 +31,7 @@
 const int led = 13;   // use 13 für Huzzah 6288 
 const int pin1 = 12;   // Dosenselect 1          
 const int pin2 = 14;   // Dosenselect 2   
-const int interruptPin = 15; //    für taster
+const int interruptPin = 2; //    für taster
 #else
 #include <WiFi.h>
 const int led = 13;   // andere Werte für esp32 ! 
@@ -168,6 +168,8 @@ void schalten ( unsigned int how)
     digitalWrite(led, LOW); 
     dosenstatus = 0;
     client.publish(publish_topic, "OFF", true);
+    Serial.print("published topic: ");   
+    Serial.println(publish_topic);       
     break;
   
   case 1:
@@ -175,6 +177,8 @@ void schalten ( unsigned int how)
     digitalWrite(led, HIGH);   // LED on
     dosenstatus = 1;
     client.publish(publish_topic, "ON", true);
+    Serial.print("published topic: ");   
+    Serial.println(publish_topic);   
     // Store structure (struct) to EEPROM 
     break;
     
@@ -299,7 +303,7 @@ void setup() {
   stat_pin2 = digitalRead(pin2);
   digitalWrite(led, LOW);         // led aus bei start
 
-  attachInterrupt(digitalPinToInterrupt(interruptPin), handleInterrupt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), handleInterrupt, FALLING);
 
   if (stat_pin1 == LOW and stat_pin2 == LOW)
    {
