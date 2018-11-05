@@ -60,7 +60,9 @@ class Wetter (MyPrint):
         self.bat = ""
         self.dattime = 0
         self.timenow = 0
-        self.intervall = 600     # in Sekunden, also: 600 /60  gleich 10 min 
+        self.intervall_1 = 3600                # in Sekunden, also: 3600 / 60  gleich 60 min 
+        self.intervall_2 = 11800                # in Sekunden, also: 11800 / 60  gleich 180 min 
+
         self.wetterlist = []
 
  #      liste of list: hier werden die Wetterdaten versorgt 
@@ -106,6 +108,8 @@ class Wetter (MyPrint):
         self.errorcode=0    # init aktor ok
         self.dattime = datetime.now().strftime("%d.%m.%Y / %H.%M")
         self.timenow = datetime.now().strftime("%H.%M")  # Zeit der meldung
+        self.wetter_data[0][3] = datetime.now()          # Init
+        self.wetter_data[1][3] = datetime.now()          # Init
 
         self.mqttc.mqtt_subscribe_topic ("switcher2/in/wetter" , self.store_wetter_data)                    # subscribe to topic
 
@@ -139,8 +143,6 @@ class Wetter (MyPrint):
             
         self.dattime = datetime.now().strftime("%d.%m.%Y / %H.%M")
         self.timenow = datetime.now().strftime("%H.%M")  # Zeit der meldung
-        self.wetter_data[0][3] = datetime.now()          # Init
-        self.wetter_data[1][3] = datetime.now()          # Init
 
  # nun datem versorgen in der Liste       
         self.wetter_data[self.inoutdoor][0] = 1           # etwas gekommen
@@ -164,7 +166,7 @@ class Wetter (MyPrint):
 # Werte ok, wir speichern....
 
         self.wetter_data[self.inoutdoor][1] = 0      # clear fehler
-        self.wetter_data[self.inoutdoor][2] = self.timenow          # Zeit der meldung
+        self.wetter_data[self.inoutdoor][2] = self.dattime          # Zeit der meldung
         self.wetter_data[self.inoutdoor][3] = datetime.now()          # Zeit der meldung
 
         self.wetter_data[self.inoutdoor][4] = self.tempe           # Temp
@@ -225,14 +227,20 @@ class Wetter (MyPrint):
     
     
 # ---- private method delta time --------------
-    def time_delta(self, time_old):
+    def time_delta(self, time_old, woher):
        
         delta = datetime.now() - time_old
         delta = int(delta.days * 24 * 3600 + delta.seconds)     # delta in sekunden    
-        if delta > self.intervall:              #   10 minuten vorbei ?
-            self.myprint (DEBUG_LEVEL0,"--> Wetter: schon lange nichts menr bekommen ")
-            return (1)
-        return(0)
+
+        if delta > self.intervall_2:              #   180 minuten vorbei ?
+            self.myprint (DEBUG_LEVEL0,"--> Wetter: schon > 3 Stunde keine Meldung bekommen von {}".format (self.inout[woher]))
+            return (2," **!!!**" )
+
+        if delta > self.intervall_1:              #   60 minuten vorbei ?
+            self.myprint (DEBUG_LEVEL0,"--> Wetter: schon > 1 Stunde keine Meldung bekommen von {}".format (self.inout[woher]))
+            return (1," **!**")
+                   
+        return(0,"")
             
 # ---- public method get wetter_data   -----------------------
     def get_wetter_data_all(self):
@@ -240,26 +248,25 @@ class Wetter (MyPrint):
  
         self.myprint (DEBUG_LEVEL1,"--> get_wetter_data_all() called  ")
 
+# indoor behandeln
         if  self.wetter_data[0][0] == 0:    # nichts gekommen von inddor
             self.intemp = "Keine Werte"   
         else:
-            self.intemp = str(self.wetter_data[0][4])
-            ret = self.time_delta (self.wetter_data[0][3])
-            if ret == 1:
-                self.intemp = self.intemp + "!!!"
-
+            self.intemp = str(self.wetter_data[0][4])       # temp indoor
+            ret, stri = self.time_delta (self.wetter_data[0][3],0)    # letzte Messung indoor
+            self.intemp = self.intemp + stri 
 
         if self.wetter_data[0][1] == 9:
             self.intemp = " Fehler Read Sensor"
-   
+
+# dann outdoor behandeln   
         if  self.wetter_data[1][0] == 0:    # nichts gekommen von outdoor
             self.outtemp = "Keine Werte"   
         else:
             self.outtemp = str(self.wetter_data[1][4])
-            ret = self.time_delta (self.wetter_data[1][3])
-            if ret == 1:
-                self.outtemp = self.outtemp + "!!!"
-   
+            ret, stri = self.time_delta (self.wetter_data[1][3], 1)   # letzte Messung outdoor
+            self.outtemp = self.outtemp + stri
+      
         if self.wetter_data[1][1] == 9:
             self.intemp = " Fehler Read Sensor"
 
@@ -317,24 +324,24 @@ class Wetter (MyPrint):
     def get_wetter_data_part(self):
         self.myprint (DEBUG_LEVEL1,"--> get_wetter_data_part() called  ")
 
+# zuerst inddor behandeln
         if  self.wetter_data[0][0] == 0:    # nichts gekommen von inddor
             self.intemp = "Keine Werte"   
         else:
             self.intemp = str(self.wetter_data[0][4])
-            ret = self.time_delta (self.wetter_data[0][3])
-            if ret == 1:
-                self.intemp = self.intemp + "!!!"
-           
+            ret, stri= self.time_delta (self.wetter_data[0][3],0)
+            self.intemp = self.intemp + stri 
+          
         if self.wetter_data[0][1] == 9:
             self.intemp = " Fehler Read Sensor"
-   
+
+# dann outdoor behandeln   
         if  self.wetter_data[1][0] == 0:    # nichts gekommen von outdoor
             self.outtemp = "Keine Werte"   
         else:
             self.outtemp = str(self.wetter_data[1][4])
-            ret = self.time_delta (self.wetter_data[1][3])
-            if ret == 1:
-                self.outtemp = self.outtemp + "!!!"
+            ret, stri = self.time_delta (self.wetter_data[1][3],1)
+            self.outtemp = self.outtemp + stri
    
         if self.wetter_data[1][1] == 9:
             self.intemp = " Fehler Read Sensor"

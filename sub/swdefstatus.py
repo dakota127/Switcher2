@@ -66,15 +66,15 @@ status_gross = [
 status_wetter_innen = [
                ["Temperatur Innen", " " ],
                ["Feuchtigkeit Innen"," " ],
-               ["Letzte Messung um", " " ],              
+               ["Messung am", " " ],              
                ["Max.Temp. Innen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Min.Temp. Innen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Max.Feucht. Innen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Min.Feucht. Innen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Batterie Innen", ""],            
 
                 ]
@@ -82,15 +82,15 @@ status_wetter_innen = [
 status_wetter_aussen = [
                ["Temperatur Aussen", "" ],
                ["Feuchtigkeit Aussen","" ],
-               ["Letzte Messung um", "" ],              
+               ["Messung am", "" ],              
                ["Max.Temp. Aussen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Min.Temp. Aussen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Max.Feucht. Aussen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Min.Feucht. Aussen", "" ],
-               ["War am", "" ], 
+               ["Gemessen am", "" ], 
                ["Batterie Aussen", ""],            
 
                 ]
