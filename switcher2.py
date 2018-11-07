@@ -54,7 +54,6 @@ from sub.swdefstatus import status_gross
 
 from sub.swmqtt import MQTT_Conn        # Class mQTT
 from sub.swwetter import Wetter 
-
 from sub.sizeof import get_size
 
 import json
@@ -483,34 +482,63 @@ def build_stat(was):
         
     #   Nun die Antwort an den Clienten zusammenstellen           
     #   Zuerst die List abfuellen und diese vor dem Senden in ein JSON wandeln
-        status_gross[0][1]=str(switcher_version) + " / " + hostname         # Version
-        status_gross[1][1]=status_laueft_seit           # Start Dat, laeuft seit
-        status_gross[2][1]=str(debug)          # Debug Flag
-        status_gross[3][1]=str(testmode)          # testmode aus Config-File
-        status_gross[4][1]=scha_stat[3:]          # schaltart aus Config-File
-        status_gross[5][1]=JANEIN[info_fuer_webserver[1]]      # Switcher Simulation Ja/Nein
-        status_gross[6][1]=time.strftime("%d.%B.%Y")           # Aktuelles Datum
-        status_gross[7][1]=wochentage[wochentag]           # Aktueller Tag
-        status_gross[8][1]=str(total_aktionen_protag)           # Anzahl Aktionen dieses Tages
-        status_gross[9][1]=str(status_anzactions)           # Anzahl Aktionen dieses Tages
-        status_gross[10][1]=status[3:]           # Dosenstatus
-        status_gross[11][1]=status_currtime           # Aktuelle ZeiT
-        status_gross[12][1]=status_waitfor          # Warten auf
-        status_gross[13][1]=status_lastaction[1]          # Letzte Aktion
-        status_gross[14][1]=zimm_last
-        status_gross[15][1]=status_nextaction[1]         # Naechste Aktion 
-        status_gross[16][1]=zimm_next
-        status_gross[17][1]=sais[aktive_saison][3].decode()   # Aktuelle Saison
-        status_gross[18][1]=sais[aktive_saison][1].decode() + " / " + sais[aktive_saison][2].decode()         # Von Bis    
-        status_gross[19][1]=sais[aktive_saison][4]   # ControlfileID
-        status_gross[20][1]=JANEIN[saison_ist_simuliert]   # Saison Simulation Ja/Nein ""  #Simulation Ja/Nein
-        status_gross[21][1]=sais[and1][3].decode()   # Aktuelle Saison                     # leer
-        status_gross[22][1]=sais[and1][1].decode() + " / " + sais[and1][2].decode()                           # leer
-        status_gross[23][1]=sais[and2][3].decode()   # Aktuelle Saison                                # leer
-        status_gross[24][1]=sais[and2][1].decode() + " / " + sais[and2][2].decode()                       # leer
-        status_gross[25][1]=daheim                     # leer
-        status_gross[26][1]=reset_man[manuell_reset]                   
-        status_gross[27][1]=" "                   
+    
+        y = 0
+        status_gross[y][1]=str(switcher_version) + " / " + hostname         # Version
+        y += 1
+        status_gross[y][1]=status_laueft_seit           # Start Dat, laeuft seit
+        y += 1
+        status_gross[y][1]=str(debug)          # Debug Flag
+        y += 1
+        status_gross[y][1]=str(testmode)          # testmode aus Config-File
+        y += 1
+        status_gross[y][1]=scha_stat[3:]          # schaltart aus Config-File
+        y += 1
+        status_gross[y][1]=JANEIN[info_fuer_webserver[1]]      # Switcher Simulation Ja/Nein
+        y += 1
+        status_gross[y][1]=time.strftime("%d.%B.%Y")           # Aktuelles Datum
+        y += 1
+        status_gross[y][1]=wochentage[wochentag]           # Aktueller Tag
+        y += 1
+        status_gross[y][1]=str(total_aktionen_protag)           # Anzahl Aktionen dieses Tages
+        y += 1
+        status_gross[y][1]=str(status_anzactions)           # Anzahl Aktionen dieses Tages
+        y += 1
+        status_gross[y][1]=status[3:]           # Dosenstatus
+        y += 1
+        status_gross[y][1]=status_currtime           # Aktuelle ZeiT
+        y += 1
+        status_gross[y][1]=status_waitfor          # Warten auf
+        y += 1
+        status_gross[y][1]=status_lastaction[1]          # Letzte Aktion
+        y += 1
+        status_gross[y][1]=zimm_last
+        y += 1
+        status_gross[y][1]=status_nextaction[1]         # Naechste Aktion 
+        y += 1
+        status_gross[y][1]=zimm_next
+        y += 1
+        status_gross[y][1]=sais[aktive_saison][3].decode()   # Aktuelle Saison
+        y += 1
+        status_gross[y][1]=sais[aktive_saison][1].decode() + " / " + sais[aktive_saison][2].decode()         # Von Bis    
+        y += 1
+        status_gross[y][1]=sais[aktive_saison][4]   # ControlfileID
+        y += 1
+        status_gross[y][1]=JANEIN[saison_ist_simuliert]   # Saison Simulation Ja/Nein ""  #Simulation Ja/Nein
+        y += 1
+        status_gross[y][1]=sais[and1][3].decode()   # Aktuelle Saison                     # leer
+        y += 1
+        status_gross[y][1]=sais[and1][1].decode() + " / " + sais[and1][2].decode()                           # leer
+        y += 1
+        status_gross[y][1]=sais[and2][3].decode()   # Aktuelle Saison                                # leer
+        y += 1
+        status_gross[y][1]=sais[and2][1].decode() + " / " + sais[and2][2].decode()                       # leer
+        y += 1
+        status_gross[y][1]=daheim                     # leer
+        y += 1
+        status_gross[y][1]=reset_man[manuell_reset]                   
+        y += 1
+        status_gross[y][1]=" "                   
 
  #   print (status_gross)
         stati=json.dumps(status_gross)          # umwandeln in JSON Object (also ein String)
@@ -815,8 +843,8 @@ def initswitcher(start):
 
 
         if wetter_behandeln == 1:                 # wetter ist verlangt, also kreiere instanz der Wetter  Klasse
-            my_wetter = Wetter (debug, path1, mymqtt_client)           
-                                                        # suscriptions werden in der Klasse wetter gemacht            
+            my_wetter = Wetter (debug, path1, mymqtt_client)               
+                                         # suscriptions werden in der Klasse wetter gemacht            
         fortschritt = 2    
     
     #   Einlesen und Parsen der Steuer-Files fuer alle Seasons             alles neu juni2018
@@ -1109,7 +1137,7 @@ def runswitch():
                 status_waitfor = "Neuer Tag"                     
                 status_nextaction[1] = "Vorlaeufig unbekannt"      
                 status_nextaction[0] = 99                   # damit zimmer unbekannt gesetzt wird    
-               
+                status_anzactions = 0                       # anzahl getaner Aktionen pro Tag
                 wochentag = warte_bis_tag_da(wochentag)     # hierin wird gewartet, bis der neue tag kommt (mitternacht)
 
                 if  term_verlangt == 1:  

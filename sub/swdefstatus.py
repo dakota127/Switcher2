@@ -75,7 +75,9 @@ status_wetter_innen = [
                ["Gemessen am", "" ], 
                ["Min.Feucht. Innen", "" ],
                ["Gemessen am", "" ], 
-               ["Batterie Innen", ""],            
+               ["Batterie Innen", ""],  
+                ["Sensorstatus", ""],  
+                ["Seit", ""],                          
 
                 ]
 
@@ -92,6 +94,8 @@ status_wetter_aussen = [
                ["Min.Feucht. Aussen", "" ],
                ["Gemessen am", "" ], 
                ["Batterie Aussen", ""],            
+                ["Sensorstatus", ""],  
+                ["Seit", ""],                          
 
                 ]
 

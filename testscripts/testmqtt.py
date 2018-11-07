@@ -16,6 +16,7 @@ from sub.myprint import MyPrint              # Class MyPrint zum printern, debug
 import threading
 from time import sleep
 
+from sub.swjanitor import Janitor 
 from sub.swwetter import Wetter 
 
 # Define Variables
@@ -35,7 +36,7 @@ DEBUG_LEVEL3=3             # 'Konstanten'
 # get and parse commandline args
 def argu():
     global thread
-
+    global debug
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-p", help="mit thread", action='store_true')
@@ -96,7 +97,7 @@ def runit():
  
     my_wetter = Wetter (debug, path1, mymqtt_client)           
    
-   
+    my_janitor = Janitor (debug, path1, mymqtt_client)           
  
     mymqtt_client.mqtt_subscribe_topic ("pool" , callback_fuer_pool)                    # subscribe to topic
    
