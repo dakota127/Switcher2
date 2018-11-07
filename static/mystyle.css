@@ -54,10 +54,10 @@ ul {
 li {
   background: #eee;
   list-style-type: none;
-  line-height: 2;
+  line-height: 1.8;
   padding-left: 0.5rem;
   margin-bottom: 0.5rem;
-  font-size: 0.85rem;
+  font-size: 0.80rem;
 
   
   overflow-wrap: break-word;
@@ -158,7 +158,7 @@ solange breite grösser als 500 ist
   
   li {
 
-  font-size: 1rem;
+  font-size: 0.9rem;
    }
   
 }
