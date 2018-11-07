@@ -78,9 +78,10 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 char* topic = "switcher2/in/wetter";
+char* topic_lw = "switcher2/lw";
 int led_status;
 int  inout_door ;
-
+String last_will_msg = "Verbindung verloren zu Sensor: ";
 String the_sketchname;
 
 //------------------------------------------------
@@ -178,9 +179,12 @@ void setup() {
   inout_door = digitalRead(testpin);
   if (inout_door == HIGH) {
       Serial.println("Bin Indoor");
+      last_will_msg = last_will_msg + "indoor";
+      
   }
   else {
           Serial.println("Bin Outdoor");
+          last_will_msg = last_will_msg + "outdoor";
     }
     
     setup_wifi();
@@ -276,7 +280,13 @@ void reconnect() {
     //please change following line to    if (client.connect(clientId,userName,passWord))
 
 //  if (client.connect("peter01",user_id,password_mqtt)) //put your clientId/userName/passWord here
-    if (client.connect(clientId.c_str()))
+
+    char last_will[45];
+    last_will_msg.toCharArray(last_will,45);
+
+// connect mit Angabe eines last will
+   if (client.connect(clientId.c_str(), topic_lw ,0 , false,last_will))
+  
     {
       Serial.println("connected");
      //once connected to MQTT broker, subscribe command if any
@@ -341,7 +351,7 @@ void loop() {
     Serial.println("Sending this message to MQTT Broker:");
     Serial.println (topic);
     Serial.println (message);
-    client.publish (topic, message);
+    client.publish (topic, message,1);            // QoS ist 1
    
     }  
 }
