@@ -120,14 +120,14 @@ class Wetter (MyPrint):
         self.wetter_data[1][4] = datetime.now()          # Init
 
         self.mqttc.mqtt_subscribe_topic ("switcher2/in/wetter" , self.store_wetter_data)    # subscribe to topic wetterdaten
-        self.mqttc.mqtt_subscribe_topic ("switcher2/lw" , self.set_sensorstat)              # subscribe to Last Will Topic der Sensoren
+        self.mqttc.mqtt_subscribe_topic ("switcher2/lw" , self.last_will)              # subscribe to Last Will Topic der Sensoren
 
 #   Ende init Wetter Klasse
 
 #---- set_sensorstat -----------------
 # hier kommt Last Will and Testament des Sensors rein (siehe Arduino Code für ESP8266)
-    def set_sensorstat(self,payload):
-        self.myprint (DEBUG_LEVEL1,"--> wetter: set_sensorstat() called  payload: {}".format( payload))
+    def last_will(self,payload):
+        self.myprint (DEBUG_LEVEL1,"--> wetter: last_will() called  payload: {}".format( payload))
         if  payload.find("indoor") >= 0:
             self.wetter_data [0][0] = 2
             self.wetter_data [0][1] = self.dattime   # datum/zeit dazu
