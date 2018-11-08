@@ -133,7 +133,7 @@ class Aktor_3 (MyPrint):
         
         if self.broker_ok:          # nur senedne, wenn mqtt connection ok
                                     # wir verwenden für loggin den mod debuglevel von der dose
-            self.myprint (debug_level_mod, "--> aktor3. publish mqtt Topic:{} , Payload: {}".format(self.mqtt_topic, payload))
+            self.myprint (debug_level_mod, "--> aktor3. publish mqtt Topic: {} , Payload: {}".format(self.mqtt_topic, payload))
         
             self.mqttc.mypublish(self.mqtt_topic, payload)
    
