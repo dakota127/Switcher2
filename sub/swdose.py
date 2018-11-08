@@ -48,6 +48,7 @@ class Dose(MyPrint):
         self.status_intern = 0        # interner Status der Dose, gemäss programmierten Aktionen
         self.status_extern = 0        # externer Status der Dosen (für Status-Anzeige)
         self.modus = 0                # 0=auto, 1=manuell
+        self.modus_1 = 0              # 1: normal, 2: dose schalten ohne berücksichtigung zuhause/nicht zuhausse 
         self.zuhause = False          # False=abwesend, True=zuhause
         self.debug = debug_in
         self.zimmer_name = ""      
@@ -65,6 +66,7 @@ class Dose(MyPrint):
         self.e = []
         self.schaltart = 0
         self.debug_level2_mod = DEBUG_LEVEL2
+        self.tmp = 0
  # nun schaltart für die Dosen  aus config holen
         
         config=ConfigRead(self.debug)        # instanz der ConfigRead Class
@@ -77,15 +79,23 @@ class Dose(MyPrint):
 
         self.myprint (DEBUG_LEVEL3, "dose {} dosen_init: dose {} configfile read {}".format (self.nummer,self.dosen_nummer, cfglist_dos))
 
-        self.schalt="dose_" + str(self.dosen_nummer) + "_schaltart"
+        self.schalt = "dose_" + str(self.dosen_nummer) + "_schaltart"
         y=cfglist_dos.index(self.schalt)  + 1           # suche den Wert von schaltart aus Config-file
         self.schalt=cfglist_dos[y].decode()
-        
+     
+        self.tmp = "dose_" + str(self.dosen_nummer) + "_modus"
+        y=cfglist_dos.index(self.tmp)  + 1           # suche den Wert von modus aus Config-file
+        self.modus_1 = int(cfglist_dos[y].decode())
+
         y=cfglist_dos.index("debug_schalt")  + 1           # suche den Wert von debug_schalt aus Config-file
         tmp = int(cfglist_dos[y].decode())
         if tmp > 0:
             self.debug_level2_mod  =  DEBUG_LEVEL0
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , alle schaltaktionen werden logged (in configfile)".format(self.dosen_nummer))
+
+        if self.modus_1 == 2 :
+            self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , dose hat modus_1 = 2".format(self.dosen_nummer))
+
             
          # schaltart auswerten....   
         if len(self.schalt) == 0:
@@ -168,6 +178,9 @@ class Dose(MyPrint):
         if self.modus==1: 
             return            # wenn modus manuell mach nichts weiter
 
+        if self.modus_1 == 2: 
+            return            # wenn modus_1 = 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
+       
         self.time_last_aktion =  datetime.now()         # zeit merken 
         
         self.status_extern=0
@@ -182,6 +195,27 @@ class Dose(MyPrint):
         self.zuhause=False
         if self.modus == 1: 
             return   # manuell, wir machen nichts
+        if self.modus_1 == 2: 
+            return            # wenn modus_1 = 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
+       
+        self.time_last_aktion =  datetime.now()         # zeit merken 
+            
+        if self.status_intern==1:
+            self.status_extern=1
+            self.myprint (self.debug_level2_mod, "dose {} einschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
+            self.myaktor.schalten(1,  self.debug_level2_mod)
+        else:
+            self.status_extern=0
+            self.myprint (self.debug_level2_mod, "dose {} ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
+            self.myaktor.schalten(0,  self.debug_level2_mod)
+
+# ---- Funktion set_dosen_wiestatus ------------------------------
+#      schaltet die Dose ein, falls interner Status 1 ist - aber nicht, wenn Modus =manuell ist 
+    def set_dosen_wiestatus(self):
+# 
+        self.myprint (self.debug_level2_mod ,  "--> dose {} set_dose_wiestatus called, zuhause: {}" .format (self.dosen_nummer, self.zuhause))
+        if self.modus == 1: 
+            return   # manuell, wir machen nichts
 
         self.time_last_aktion =  datetime.now()         # zeit merken 
             
@@ -193,6 +227,7 @@ class Dose(MyPrint):
             self.status_extern=0
             self.myprint (self.debug_level2_mod, "dose {} ausschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
             self.myaktor.schalten(0,  self.debug_level2_mod)
+
 
 
 # ---- Funktion set_dosen_manuell ------------------------------
@@ -237,10 +272,12 @@ class Dose(MyPrint):
    
         self.status_intern = how      # interner status wird in jedem Fall nachgeführt
  
-        if self.zuhause: 
-            return                  # wenn jemand da wird bloss interner status nachgeführt
-        
-        if self.modus==0:           # Nur wirklich schalten, wenn modus auto ist - externer status nachführen
+        if self.zuhause :
+            if self.modus_1 == 1:
+                return                  # wenn jemand da ist wird bloss interner status nachgeführt
+    
+    
+        if self.modus == 0:           # Nur wirklich schalten, wenn modus auto ist - externer status nachführen
             self.status_extern=how
             self.time_last_aktion =  datetime.now()         # zeit merken 
 
@@ -309,9 +346,12 @@ class Dose(MyPrint):
         ret=str(self.status_extern)
         if  self.modus==1:
             ret = ret+"m"
-        else:
-            if self.zuhause:
-                ret = ret+"h"
+            
+        if self.zuhause and self.modus_1 == 1:
+            ret = ret+"h"
+            
+        if self.modus_1 == 2:
+            ret = ret+"i"                       # überschreibt alle anderen werte
         pass
         ret = ret + ":" + str(self.schaltart)     # die schaltart noch dazu
         return(ret)

@@ -92,6 +92,13 @@ cfglist_akt=[
 
 cfglist_dos=[
         "abschnitt", 'dose', 
+        "dose_1_modus" , 1,
+        "dose_2_modus" , 1,
+        "dose_3_modus" , 1,
+        "dose_4_modus" , 1,
+        "dose_5_modus" , 1,  
+        "dose_6_modus" , 1,
+       
         "dose_1_schaltart" , 1,
         "dose_2_schaltart" , 1,
         "dose_3_schaltart" , 1,
