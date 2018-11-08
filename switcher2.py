@@ -1061,7 +1061,7 @@ def runswitch():
 #       da wir bislang die vergangenen Aktionen virtuell geschaltet haben - also bloss den internen Status gesetzt haben,
 #       muessen wir nun noch die Dosen gemaess diesen Stati wirklich schalten.
     for dose in dosen:
-        dose.set_nichtzuhause()
+        dose.set_dosen_wiestatus()
         
     mypri.myprint (DEBUG_LEVEL0,   "vergangene aktionen sind erledigt")
 # ---- Alle vergangenen Aktionen des Tages erledigt. Nun gehts ans Schalten..

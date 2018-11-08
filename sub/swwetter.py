@@ -131,11 +131,12 @@ class Wetter (MyPrint):
         if  payload.find("indoor") >= 0:
             self.wetter_data [0][0] = 2
             self.wetter_data [0][1] = self.dattime   # datum/zeit dazu
+            self.wetter_data[0][2] = 0               # clear error code
             return
         if  payload.find("outdoor") >= 0:    
             self.wetter_data [1][0] = 2
             self.wetter_data [1][1] = self.dattime   # datum/zeit dazu
-
+            self.wetter_data[1][2] = 0               # clear error code
 
 #--- Funktion Behandlung Wetterdaten------------------------------
     def store_wetter_data (self, payload):
@@ -223,8 +224,9 @@ class Wetter (MyPrint):
         self.wetter_data[self.inoutdoor][15] = int(self.bat)    # battery level
         
         # nun noch status setzen      
-        self.wetter_data [self.inoutdoor][0] = 1         # setze sensorstatus auf 1 (verbunden)
-        self.wetter_data [self.inoutdoor][1] = self.dattime   # datum/zeit dazu
+        if not self.wetter_data [self.inoutdoor][0] == 1:          # verändere, wenn anders als 1 (verbunden) ist
+            self.wetter_data [self.inoutdoor][0] = 1            # setze sensorstatus auf 1 (verbunden)
+            self.wetter_data [self.inoutdoor][1] = self.dattime   # datum/zeit dazu
      
 
         self.myprint (DEBUG_LEVEL2, "Wetterdata indoor:  {}".format(self.wetter_data[0]))
@@ -347,6 +349,8 @@ class Wetter (MyPrint):
 
         if  self.wetter_data[0][0] == 0:   # check sensorstatus  0: noch nicht verbunden
             self.intemp = "Noch keine Werte"   
+        elif self.wetter_data[0][0] == 2:   # check sensorstatus  2: Verbindung verloren
+            self.intemp = "Verbindung unterbrochen"    
         else:
             self.intemp = str(self.wetter_data[0][5])
             ret, stri= self.time_delta (self.wetter_data[0][4],0)
@@ -355,9 +359,12 @@ class Wetter (MyPrint):
         if self.wetter_data[0][2] == 9:
             self.intemp = " Fehler Read Sensor"
 
+        
 # dann outdoor behandeln   
-        if  self.wetter_data[1][0] == 0:    # check sensorstatus 0: nichts gekommen von outdoor
+        if  self.wetter_data[1][0] == 0:   # check sensorstatus  0: noch nicht verbunden
             self.outtemp = "Noch keine Werte"   
+        elif self.wetter_data[1][0] == 2:   # check sensorstatus  2: Verbindung verloren
+            self.outtemp = "Verbindung unterbrochen"    
         else:
             self.outtemp = str(self.wetter_data[1][5])
             ret, stri = self.time_delta (self.wetter_data[1][4],1)
