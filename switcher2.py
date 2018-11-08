@@ -839,9 +839,13 @@ def initswitcher(start):
             mypri.myprint (DEBUG_LEVEL1,"MQTT noetig oder verlangt: {}".format(JANEIN[mqtt_setup]))
 
             mymqtt_client = MQTT_Conn (debug, path1, "switcher2")            
-            mqtt_ok = 1
-
-
+            sleep(1)        # wir warten 1 sek und fragen dann nach
+            ret = mymqtt_client.get_status()  
+            if ret > 0:
+                mypri.myprint (DEBUG_LEVEL0, "Switcher Init: mqtt fehler, rc: {}, kann nicht weiterfahren",format(ret))
+                raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
+            else:
+                mqtt_ok = 1
         if wetter_behandeln == 1:                 # wetter ist verlangt, also kreiere instanz der Wetter  Klasse
             my_wetter = Wetter (debug, path1, mymqtt_client)               
                                          # suscriptions werden in der Klasse wetter gemacht            
@@ -955,10 +959,8 @@ def initswitcher(start):
             terminate(fortschritt)
     finally: 
     # hierher kommen wir immer, ob Keyboard Exception oder andere Exception oder keine Exception
-    
-        if mqtt_setup == 1:                     # letzte Aktion vor Ende Init: start mqtt Loop
-            mymqtt_client.mqtt_start()
-
+        sleep(1)
+        mymqtt_client.mqtt_start()
                 
         mypri.myprint (DEBUG_LEVEL0,  "--> Initswitcher done")	# wir starten       juni2018
         return(error)
@@ -979,6 +981,8 @@ def runswitch():
     global aktive_saison, saison_ist_simuliert, liste_aller_tage
     global list_aktionen_past, list_aktionen_zukunft
 
+
+    
 #  -- Funktion: warten bis der nächste wochentag wirklich eintrifft ------------------------------
     def warte_bis_tag_da(wochentag):
         global status_currtime
@@ -1032,7 +1036,7 @@ def runswitch():
       
     hhmm_tag = [datetime.now().strftime("%H.%M"),datetime.today().strftime("%w")]    # aktuelle Zeit holen
     mypri.myprint (DEBUG_LEVEL0,   "--> Switcher2 Function runswitch(): start switching. Zeit und Wochentag: {}".format(hhmm_tag))
-
+    
     time_old = datetime.now()                           # fuer Zeitmessung
 
     aktive_saison, saison_ist_simuliert = get_saison()  # Saison des Jahres ermitteln
@@ -1083,8 +1087,16 @@ def runswitch():
                 if debug:  
                     mypri.myprint (DEBUG_LEVEL1,   "Arbeite an Wochentag: {} hat {} Aktionen, davon {} vergangene bereits erledigt".format( wochentag, total_aktionen_protag, len(list_aktionen_past)) )
                     sleep(2)
+                 # checkt mqtt connection again    
+                ret = mymqtt_client.get_status()  
+                if ret > 0:
+                    mypri.myprint (DEBUG_LEVEL0, "Switcher runit: mqtt fehler, rc: {}, kann nicht weiterfahren".format(ret))
+                    mypri.myprint (DEBUG_LEVEL0, "Switcher runit: mqtt verlangt, aber connection fehler (authentication?)")
+
+                    raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
 
                 mypri.myprint (DEBUG_LEVEL1,   "Starte Aktionen_loop")
+
 
 #----- LOOP-2 ueber alle restlichen Actions eines Tages --------------------------------------------------
                 for aktion in list_aktionen_zukunft:       
@@ -1137,7 +1149,6 @@ def runswitch():
                 status_waitfor = "Neuer Tag"                     
                 status_nextaction[1] = "Vorlaeufig unbekannt"      
                 status_nextaction[0] = 99                   # damit zimmer unbekannt gesetzt wird    
-                status_anzactions = 0                       # anzahl getaner Aktionen pro Tag
                 wochentag = warte_bis_tag_da(wochentag)     # hierin wird gewartet, bis der neue tag kommt (mitternacht)
 
                 if  term_verlangt == 1:  
@@ -1150,6 +1161,7 @@ def runswitch():
                     liste_aller_tage = alle_tage_pro_saison( list_tage, aktive_saison )   # liste neu erstellen (neue saison)             
                         
                 list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, wochentag )
+                status_anzactions = 0                       # anzahl getaner Aktionen pro Tag
                                        
                                                             # manuell im configfile: 0= forever, 1=nur bis Mitternacht)                                          
                 if manuell_reset==1:                        # war manuell im confifile auf 1 ?
@@ -1228,7 +1240,7 @@ if __name__ == '__main__':
     forground=1     # zeigt, dass Programm im Vordergrund laeuft, Main wurde gerufen
     options=argu()                          # get commandline args
     ret=initswitcher(0)  # init stuff, parameter 0 heisst : im switcher2.py gestartet
-    if ret==9:
+    if ret == 9:
         sys.exit(2)
     runswitch()         #  here is the beef, runs forever
     

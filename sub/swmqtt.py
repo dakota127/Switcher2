@@ -62,6 +62,7 @@ class MQTT_Conn(MyPrint):
         self.s = 0
         self.connected = False
         self.errorcode = 8
+        self.mqtt_error = 0
         self.topic_list = []
         self.callback_list = []
         
@@ -87,11 +88,18 @@ class MQTT_Conn(MyPrint):
         self.mqtt_keepalive_intervall = (int(cfglist_swi[y]))
 
 
+#------------
         def my_connect (mqttc, userdata, flags, rc):
-            self.myprint (DEBUG_LEVEL1, "MQTT Connect OK, flags: {}, resultcode: {} ".format(str(flags),str(rc)))
-            self.connected = True
+            self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: my_connect() called, rc: {}".format(rc) )
+            if rc == 0:
+                self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: connection OK, rc: {}".format(rc) )
+                self.connected = True
+            else:
+                self.myprint (DEBUG_LEVEL0, "--> MQTT_Conn: connection NOTOK, rc: {}".format(rc) )
+                self.connected = False
+                self.mqtt_error = rc         
             return
-    
+#---------------    
         
         if len(self.mqtt_broker_ip) == 0:
         
@@ -112,12 +120,12 @@ class MQTT_Conn(MyPrint):
 
         self.mqttc = mqtt.Client(self.mqtt_client_id)   # Initiate MQTT Client
         self.mqttc.on_connect = my_connect
+        
+        self.mqttc.username_pw_set(username='switcher2',password='itscool')
         # Connect with MQTT Broker
         try:
             self.mqttc.connect(self.mqtt_broker_ip, self.mqtt_port, self.mqtt_keepalive_intervall) 
-            self.broker_ok = True
-#            self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect hat geklappt")
-            
+
         except:
             self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, is mosquitto broker running?")
             self.myprint (DEBUG_LEVEL0, "mqtt_conn: start mosquitto mit 'sudo service mosquitto restart'")
@@ -170,6 +178,13 @@ class MQTT_Conn(MyPrint):
         self.mqttc.loop_start()
         self.myprint (DEBUG_LEVEL2, "loop_start() ausgefuehrt")
         return
+
+
+#---------------------------------------------------
+    def get_status(self):
+        self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: get_status() called, mqtt_error : {}".format(self.mqtt_error))
+        return (self.mqtt_error)
+
 
 #------------------------------------------------
 

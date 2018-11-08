@@ -54,8 +54,8 @@ const int ledpin = 27;
 
 const char* ssid = WAN_SSID;
 const char* password =  WAN_PW;
-const char* user_id="peter";
-const char* password_mqtt =  "PW";
+const char* user_id="switcher2";
+const char* password_mqtt =  "itscool";
 
 #define DHTTYPE DHT22       // DHT 22 (AM2302), AM2321
 
@@ -280,12 +280,13 @@ void reconnect() {
     //please change following line to    if (client.connect(clientId,userName,passWord))
 
 //  if (client.connect("peter01",user_id,password_mqtt)) //put your clientId/userName/passWord here
+//  if (client.connect(clientId.c_str(), topic_lw ,0 , false,last_will))
 
     char last_will[45];
     last_will_msg.toCharArray(last_will,45);
 
 // connect mit Angabe eines last will
-   if (client.connect(clientId.c_str(), topic_lw ,0 , false,last_will))
+   if (client.connect(clientId.c_str(), user_id,password_mqtt, topic_lw ,0 , false,last_will))
   
     {
       Serial.println("connected");

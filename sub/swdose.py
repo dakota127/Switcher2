@@ -122,7 +122,7 @@ class Dose(MyPrint):
             self.schaltart = 1
         
         if self.schaltart == 3 and self.mqtt_status == 0:
-            self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , nehme Schaltart 1 da kein MQTT definiert ist !".format(self.dosen_nummer))
+            self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , nehme Schaltart 1 da MQTT nicht definiert oder fehlerhaft ist !".format(self.dosen_nummer))
             self.schaltart = 1
                 
 
