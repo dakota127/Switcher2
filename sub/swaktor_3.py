@@ -88,6 +88,8 @@ class Aktor_3 (MyPrint):
             self.mqttc.mqtt_subscribe_topic (topic_subscribe , self.dosencallback)     # subscribe to topic
             self.myprint (DEBUG_LEVEL0,  "--> aktor3 mqtt subscription, topic: {} ".format(topic_subscribe))
     
+            self.mqttc.mqtt_subscribe_topic ("switcher2/switch/lw" , self.last_will)              # subscribe to Last Will Topic der Sensoren
+
         pass
 
 # ************************************************** 		
@@ -136,7 +138,15 @@ class Aktor_3 (MyPrint):
             self.myprint (debug_level_mod, "--> aktor3. publish mqtt Topic: {} , Payload: {}".format(self.mqtt_topic, payload))
         
             self.mqttc.mypublish(self.mqtt_topic, payload)
-   
+
+
+#---- set_sensorstat -----------------
+# hier kommt Last Will and Testament des schalters (siehe Arduino Code für ESP8266)
+    def last_will(self,payload):
+        self.myprint (DEBUG_LEVEL0,"--> aktor3.last_will() called  payload: {}".format( payload))
+        pass
+        
+        # vorläufig empty
  
 #-------------------------------------------------
 #
