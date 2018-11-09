@@ -55,13 +55,17 @@ const char* pub_topic1 = "stat/dose1/POWER";
 const char* pub_topic2 = "stat/dose2/POWER";
 const char* pub_topic3 = "stat/dose3/POWER";
 const char* pub_topic4 = "stat/dose4/POWER";
+
+const char* lwt_topic = "switcher2/switch/lw";
+
+
+String last_will_msg = "Verbindung verloren zu mqtt dose: ";
+
 const char*   publish_topic;
 /* diese Werte anpassen   <<--------- */
 
-
-const char* user_id="admin";            // falls mqtt Broker anmeldung verlangt    
-const char* password_mqtt="tabstop";
-
+const char* user_id="switcher2";
+const char* password_mqtt =  "itscool";
 
 
 int stat_pin1;
@@ -251,11 +255,12 @@ void reconnect() {
     clientId += String(random(0xffff), HEX);
     Serial.println (clientId);
     // Attempt to connect
-    //if you MQTT broker has clientID,username and password
-    //please change following line to    if (client.connect(clientId,userName,passWord))
-//	if (client.connect("peter01",user_id,password_mqtt)) //put your clientId/userName/passWord here
+    char last_will[45];
+    last_will_msg.toCharArray(last_will,45);
 
-    if (client.connect(clientId.c_str()))
+    
+//  if (client.connect(clientId.c_str()))
+    if (client.connect(clientId.c_str(), user_id,password_mqtt, lwt_topic ,0 , false,last_will))
     {
       Serial.println("connected to broker");
      //once connected to MQTT broker, subscribe command if any
@@ -298,7 +303,6 @@ void setup() {
   pinMode(pin1, INPUT);
   pinMode(pin2, INPUT);
   pinMode(interruptPin, INPUT_PULLUP);
-    
   stat_pin1 = digitalRead(pin1);
   stat_pin2 = digitalRead(pin2);
   digitalWrite(led, LOW);         // led aus bei start
@@ -330,7 +334,8 @@ void setup() {
    
    Serial.print ("Ich bin Dose: ");
    Serial.println (dosennummer);
-
+   
+   last_will_msg = last_will_msg + "";
 
    Serial.println("Read struct dose");
   // Read structure (struct) from EEPROM
