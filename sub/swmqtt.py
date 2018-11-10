@@ -27,7 +27,7 @@ DEBUG_LEVEL0=0
 DEBUG_LEVEL1=1
 DEBUG_LEVEL2=2
 DEBUG_LEVEL3=3
-
+CONNECT_COUNTER = 5     # loopp counter für mqtt connection
 
 #-------------------------------------------------
 # Class MQTT_Conn erbt vom Class MyPrint
@@ -66,7 +66,7 @@ class MQTT_Conn(MyPrint):
         self.mqttc = 0              # Instance of mqtt
         self.broker_ok = False
         self.s = 0
-        self.connected = False
+        self.connect_flag = False
         self.errorcode = 8
         self.mqtt_error = 0
         self.topic_list = []
@@ -105,6 +105,10 @@ class MQTT_Conn(MyPrint):
         y = cfglist_mqtt.index("mqtt_retain")  + 1    # suche den Wert im Config-file
         self.mqtt_retain = int(cfglist_mqtt[y])
 
+#------------
+        def my_subscribe (mqttc, userdata, mid, qos):
+            self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: my_subscribe() called, userdata: {}".format(userdata) )
+#---------------    
 
 
 #------------
@@ -112,10 +116,10 @@ class MQTT_Conn(MyPrint):
             self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: my_connect() called, rc: {}".format(rc) )
             if rc == 0:
                 self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: connection OK, rc: {}".format(rc) )
-                self.connected = True
+                self.connect_flag = True
             else:
                 self.myprint (DEBUG_LEVEL0, "--> MQTT_Conn: connection NOTOK, rc: {}".format(rc) )
-                self.connected = False
+                self.connect_flag = False
                 self.mqtt_error = rc         
             return
 #---------------    
@@ -139,28 +143,36 @@ class MQTT_Conn(MyPrint):
         self.myprint (DEBUG_LEVEL1, "MQTT_Conn:: UserID: {} , Passwort: {} , QoS: {} , Retain: {}".format(self.mqtt_userid, self.mqtt_pw, self.mqtt_qos, self.mqtt_retain))
 
         self.mqttc = mqtt.Client(self.mqtt_client_id)   # Initiate MQTT Client
-        self.mqttc.on_connect = my_connect
+        self.mqttc.on_connect = my_connect              # setup on connect callback
+        self.mqttc.on_subscribe = my_subscribe          # setup on subscribe callback
+    # Register Event Handlers
+        self.mqttc.on_message = self.my_callback_msg
+        
+#        self.mqttc.username_pw_set(username="peter" , password=self.mqtt_pw)  # für test mit falscher user-id
         
         self.mqttc.username_pw_set(username=self.mqtt_userid , password=self.mqtt_pw)
         # Connect with MQTT Broker
-        try:
-            self.mqttc.connect(self.mqtt_broker_ip, self.mqtt_port, self.mqtt_keepalive_intervall) 
 
-        except:
-            self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, is mosquitto broker running?")
+        self.mqtt_start()
+        self.mqttc.connect(self.mqtt_broker_ip, self.mqtt_port, self.mqtt_keepalive_intervall) 
+
+        for z in range (CONNECT_COUNTER):
+            if self.connect_flag:
+                break        #wait in loop
+            else:
+                sleep(1)
+        if not self.connect_flag:
+            self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, laeuft mosquitto broker ?")
+            self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, user-id/passwort richtig ?")
             self.myprint (DEBUG_LEVEL0, "mqtt_conn: start mosquitto mit 'sudo service mosquitto restart'")
-    
-    
-  #      self.mqttc.subscribe(self.topic_sub, 0)
-  #      self.myprint (DEBUG_LEVEL0, "Using Topic: {}".format(self.topic_sub))
 
-    # Register Event Handlers
-        self.mqttc.on_message = self.my_callback_msg
+        self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect OK")
+      
+        return   
 
         self.errorcode = 0           # Aktor init ok
 
   #      self.mqttc.loop_start()     # starte mqtt loop
-
 
         
 # --- Publish -------------------------------------
@@ -190,13 +202,14 @@ class MQTT_Conn(MyPrint):
     def mqtt_stop(self):
         self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: mqtt_stop() called")
         self.mqttc.loop_stop()
+        self.mqttc.disconnect() # disconnect
         return
 
 #---------------------------------------------------
     def mqtt_start(self):
         self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: mqtt_start() called")
         self.mqttc.loop_start()
-        self.myprint (DEBUG_LEVEL2, "loop_start() ausgefuehrt")
+        self.myprint (DEBUG_LEVEL1, "MQTT loop_start() ausgefuehrt")
         return
 
 
@@ -228,9 +241,7 @@ class MQTT_Conn(MyPrint):
         global busy, my_wetter, debug
         
         self.myprint (DEBUG_LEVEL1,"--> MQTT_Conn: my_callback_msg() called, meldung gekommen: topic: {},  payload: {}".format( msg.topic,msg.payload.decode()))
-    
-    
-              
+          
         
         found = False
         for topic , callba in zip(self.topic_list , self.callback_list):

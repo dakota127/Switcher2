@@ -154,6 +154,7 @@ class Wetter (MyPrint):
             return
 #        print (self.woher, self.temp, self.hum, self.bat)
     
+    
         self.inoutdoor = -8
         if  self.woher.find("outdoor") >= 0:
             self.myprint (DEBUG_LEVEL2,"Wetter: meldung von outdoor sensor gekommen") 
@@ -289,7 +290,7 @@ class Wetter (MyPrint):
 
         status_wetter_innen[0][1] = self.intemp                # in temp
         status_wetter_innen[1][1] = str(self.wetter_data[0][6])     # in feucht
-        status_wetter_innen[2][1] = self.wetter_data[0][3]     # last time
+        status_wetter_innen[2][1] = self.wetter_data[0][3]     # datim/zeit last meldung
         
         status_wetter_innen[3][1] = str(self.wetter_data[0][7])    # max temp innen
         status_wetter_innen[4][1] = self.wetter_data[0][8]     # datum dazu
@@ -311,7 +312,7 @@ class Wetter (MyPrint):
 # nun outdoor
         status_wetter_aussen[0][1] = self.outtemp               # out temp
         status_wetter_aussen[1][1] = str(self.wetter_data[1][6])     # out feucht
-        status_wetter_aussen[2][1] = self.wetter_data[1][3]     # last time out
+        status_wetter_aussen[2][1] = self.wetter_data[1][3]     # datum/zeit last meldung out
 
         status_wetter_aussen[3][1] = str(self.wetter_data[1][7])     # max temp aussen
         status_wetter_aussen[4][1] = self.wetter_data[1][8]     # datum dazu
