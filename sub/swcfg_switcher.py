@@ -5,7 +5,7 @@
 # ***** Variables *****************************
 #   Struktur (Liste) der Daten, die aus dem Configfile swconfig.ini gelesen werden
 # s  hier die defaultwerte der 'variablen'
-cfglist_swi=[
+cfglist_swi = [
         "abschnitt", 'switcher',     
         "testmode", "Nein",                         #
         "saison_1" , "summer" ,
@@ -21,15 +21,25 @@ cfglist_swi=[
         "gpio_home_button" , 15,                              
         "gpio_blink" , 0,
         "oled", 0,                             #
-        "mqtt_ipadr" , "",
-        "mqtt_port" ,  1883,
-        "mqtt_keepalive_intervall" , 45,
-        "mqtt_client_id" , "switcher2",   
 
         "schalter", "00000",                        #
         "manuell_reset", 0,                               # manueller Dosenstatus: 0= er bleibt für immer, 1= bis Mitternacht
         "reserve", 'reservedefault'                 #
         ]
+
+
+#   Struktur (Liste) der Daten, die aus dem Configfile swconfig.ini gelesen werden
+#   hier die defaultwerte der 'variablen'
+cfglist_mqtt = [
+        "mqtt_ipadr" , "",
+        "mqtt_port" ,  1883,
+        "mqtt_keepalive_intervall" , 45,
+        "mqtt_userid" , "switcher2" ,
+        "mqtt_pw" , "itscool",
+        "mqtt_qos" , 0  ,
+        "mqtt_retain" , 0 ,
+        ]
+
 
 #  Parameter für Config Read der Aktor-Klassen -------------------
 #  Aktor Klasse Aktor
@@ -37,7 +47,7 @@ cfglist_swi=[
 # ***** Variables *****************************
 #   Struktur (Liste) der Daten, die aus dem Configfile swconfig.ini gelesen werden
 #   hier die defaultwerte der 'variablen'
-cfglist_akt=[
+cfglist_akt = [
         "abschnitt", 'aktor_1',     
         "gpio_1" , 12,
         "gpio_2" , 19,
@@ -90,7 +100,7 @@ cfglist_akt=[
 #   script sorgt dafür (mit Warnung), dass dies eingehalten wird.
 #   Amsonsten ist schaltart frei wählbar
 
-cfglist_dos=[
+cfglist_dos = [
         "abschnitt", 'dose', 
         "dose_1_modus" , 1,
         "dose_2_modus" , 1,

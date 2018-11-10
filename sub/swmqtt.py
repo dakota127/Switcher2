@@ -20,7 +20,7 @@ from datetime import date
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
 from sub.configread import ConfigRead
 
-from sub.swcfg_switcher import cfglist_swi
+from sub.swcfg_switcher import cfglist_mqtt
 
 
 DEBUG_LEVEL0=0
@@ -57,6 +57,12 @@ class MQTT_Conn(MyPrint):
         self.mqtt_port = 0
         self.mqtt_keepalive_intervall = 0
         self.mqtt_topic = ""
+        
+        self.mqtt_userid = ""
+        self.mqtt_pw = ""
+        self.mqtt_qos = 0
+        self.mqtt_retain = 0 
+
         self.mqttc = 0              # Instance of mqtt
         self.broker_ok = False
         self.s = 0
@@ -69,7 +75,7 @@ class MQTT_Conn(MyPrint):
  # nun mqtt Brokder data aus config holen
         
         config = ConfigRead(self.debug)        # instanz der ConfigRead Class
-        ret = config.config_read(self.path + "/swconfig.ini","switcher",cfglist_swi)
+        ret = config.config_read(self.path + "/swconfig.ini","mqtt",cfglist_mqtt)  # lese von abschnitt mqtt
         if ret > 0:
             self.myprint (DEBUG_LEVEL0, "MQTT_Conn: config_read hat retcode: {}".format (ret))
             self.errorcode = 99
@@ -78,14 +84,27 @@ class MQTT_Conn(MyPrint):
         self.myprint (DEBUG_LEVEL1, "--> MQTT_Conn: mqtt_conn_init_ called, client_id:{}".format(self.mqtt_client_id) )
 
 #   IP-ADr Broker holen
-        y = cfglist_swi.index("mqtt_ipadr")  + 1    # suche den Wert im Config-file
-        self.mqtt_broker_ip = cfglist_swi[y]
+        y = cfglist_mqtt.index("mqtt_ipadr")  + 1    # suche den Wert im Config-file
+        self.mqtt_broker_ip = cfglist_mqtt[y]
 #   Port Broker holen
-        y = cfglist_swi.index("mqtt_port")  + 1    # suche den Wert im Config-file
-        self.mqtt_port = (int(cfglist_swi[y]))
+        y = cfglist_mqtt.index("mqtt_port")  + 1    # suche den Wert im Config-file
+        self.mqtt_port = int(cfglist_mqtt[y])
 #   Intervall holen
-        y = cfglist_swi.index("mqtt_keepalive_intervall")  + 1    # suche den Wert im Config-file
-        self.mqtt_keepalive_intervall = (int(cfglist_swi[y]))
+        y = cfglist_mqtt.index("mqtt_keepalive_intervall")  + 1    # suche den Wert im Config-file
+        self.mqtt_keepalive_intervall = int(cfglist_mqtt[y])
+#   user-id holen
+        y = cfglist_mqtt.index("mqtt_userid")  + 1    # suche den Wert im Config-file
+        self.mqtt_userid = cfglist_mqtt[y].decode()
+#   passwort holen
+        y = cfglist_mqtt.index("mqtt_pw")  + 1    # suche den Wert im Config-file
+        self.mqtt_pw = cfglist_mqtt[y].decode()
+#   QoS holen
+        y = cfglist_mqtt.index("mqtt_qos")  + 1    # suche den Wert im Config-file
+        self.mqtt_qos = int(cfglist_mqtt[y])
+#   retain holen
+        y = cfglist_mqtt.index("mqtt_retain")  + 1    # suche den Wert im Config-file
+        self.mqtt_retain = int(cfglist_mqtt[y])
+
 
 
 #------------
@@ -117,11 +136,12 @@ class MQTT_Conn(MyPrint):
         self.mqtt_broker_ip = self.IP       # dies ist unsere IP-ADR
         
         self.myprint (DEBUG_LEVEL1, "MQTT_Conn:: IP-Adr. des MQTT Brokers: {}".format(self.mqtt_broker_ip))
+        self.myprint (DEBUG_LEVEL1, "MQTT_Conn:: UserID: {} , Passwort: {} , QoS: {} , Retain: {}".format(self.mqtt_userid, self.mqtt_pw, self.mqtt_qos, self.mqtt_retain))
 
         self.mqttc = mqtt.Client(self.mqtt_client_id)   # Initiate MQTT Client
         self.mqttc.on_connect = my_connect
         
-        self.mqttc.username_pw_set(username='switcher2',password='itscool')
+        self.mqttc.username_pw_set(username=self.mqtt_userid , password=self.mqtt_pw)
         # Connect with MQTT Broker
         try:
             self.mqttc.connect(self.mqtt_broker_ip, self.mqtt_port, self.mqtt_keepalive_intervall) 

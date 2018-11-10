@@ -51,7 +51,7 @@ status_gross = [
                 ["Von/Bis", " " ],               
                 ["Zuhause", " " ],
                 ["Reset Manuelle", " " ],
-                ["Reserve", " "],
+                ["MQTT Status", " "],
                
                 
                 ]

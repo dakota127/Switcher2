@@ -170,8 +170,8 @@ info_fuer_server = [0 for z in range(12)]
                                 # index 2-9: for future use
 
 
-mqtt_ok = 0                     # init lief ok
-mqtt_setup = 0                  # MQTT gebrucht in Switcher 2
+mqtt_ok = 0                     # init lief ok 0: notok, 1 OK
+mqtt_setup = 0                  # MQTT gebraucht in Switcher 2 0: kein mqtt verwendet, 1 verwendet
 #
 #
 # ***** Function Parse commandline arguments ***********************
@@ -538,7 +538,15 @@ def build_stat(was):
         y += 1
         status_gross[y][1]=reset_man[manuell_reset]                   
         y += 1
-        status_gross[y][1]=" "                   
+        if mqtt_setup == 0:
+            status_gross[y][1]="Nicht benützt"
+        else:  
+        # checkt mqtt connection again    
+            ret = mymqtt_client.get_status()  
+            if ret == 0:
+                status_gross[y][1]="verbunden"
+            else:
+                status_gross[y][1]="nicht verbunden"                
 
  #   print (status_gross)
         stati=json.dumps(status_gross)          # umwandeln in JSON Object (also ein String)
@@ -838,7 +846,7 @@ def initswitcher(start):
 # entweder weil Wetter konfiguriert ist oder weil mind. einen Dose Schaltart 3 hat.
             mypri.myprint (DEBUG_LEVEL1,"MQTT noetig oder verlangt: {}".format(JANEIN[mqtt_setup]))
 
-            mymqtt_client = MQTT_Conn (debug, path1, "switcher2")            
+            mymqtt_client = MQTT_Conn (debug, path1, "switcher2" + hostname)            
             sleep(1)        # wir warten 1 sek und fragen dann nach
             ret = mymqtt_client.get_status()  
             if ret > 0:
@@ -1087,13 +1095,16 @@ def runswitch():
                 if debug:  
                     mypri.myprint (DEBUG_LEVEL1,   "Arbeite an Wochentag: {} hat {} Aktionen, davon {} vergangene bereits erledigt".format( wochentag, total_aktionen_protag, len(list_aktionen_past)) )
                     sleep(2)
+                    
+                if mqtt_setup == 1:    
                  # checkt mqtt connection again    
-                ret = mymqtt_client.get_status()  
-                if ret > 0:
-                    mypri.myprint (DEBUG_LEVEL0, "Switcher runit: mqtt fehler, rc: {}, kann nicht weiterfahren".format(ret))
-                    mypri.myprint (DEBUG_LEVEL0, "Switcher runit: mqtt verlangt, aber connection fehler (authentication?)")
-
-                    raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
+                    ret = mymqtt_client.get_status()  
+                    if ret > 0:
+                        mypri.myprint (DEBUG_LEVEL0, "Switcher runit: mqtt fehler, rc: {}, kann nicht weiterfahren".format(ret))
+                        mypri.myprint (DEBUG_LEVEL0, "Switcher runit: mqtt verlangt, aber connection fehler (authentication?)") 
+                        raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
+                    else:
+                        mqtt_ok = 1
 
                 mypri.myprint (DEBUG_LEVEL1,   "Starte Aktionen_loop")
 
