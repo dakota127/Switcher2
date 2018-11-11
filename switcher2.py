@@ -539,7 +539,7 @@ def build_stat(was):
         status_gross[y][1]=reset_man[manuell_reset]                   
         y += 1
         if mqtt_setup == 0:
-            status_gross[y][1]="Nicht benützt"
+            status_gross[y][1]="Nicht konfiguriert"
         else:  
         # checkt mqtt connection again    
             ret = mymqtt_client.get_status()  
