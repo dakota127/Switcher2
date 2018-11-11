@@ -45,28 +45,31 @@ class Dose(MyPrint):
     def __init__(self, dose,testmode_in,debug_in, path_in, mqtt_status_in, mqttc_in):   # Init Methode der Dose, setzt Instanz Variablen
         self.errorcode = 8          # initwert, damit beim Del des Aktors richtig gehandelt wird
         self.nummer = Dose.dosenzahler      
-        self.status_intern = 0        # interner Status der Dose, gemäss programmierten Aktionen
-        self.status_extern = 0        # externer Status der Dosen (für Status-Anzeige)
-        self.modus = 0                # 0=auto, 1=manuell
-        self.modus_1 = 0              # 1: normal, 2: dose schalten ohne berücksichtigung zuhause/nicht zuhausse 
-        self.zuhause = False          # False=abwesend, True=zuhause
+        self.status_intern = 0          # interner Status der Dose, gemäss programmierten Aktionen
+        self.status_extern = 0          # externer Status der Dosen (für Status-Anzeige)
+                                        # die folgenden drei variablen beeinflussen die Art und weise des schaltens der Dose
+        self.schaltart = 0              # technische schaltart, bestimmt den Aktor, der benutzt werden muss
+        self.schaltmodus = 0            # 0=auto, 1=manuell
+        self.schaltprio = 0             # 1: normal, 2: dose schalten ohne berücksichtigung zuhause/nicht zuhause 
+
+        self.zuhause = False            # False=abwesend, True=zuhause
         self.debug = debug_in
         self.zimmer_name = ""      
-        Dose.dosenzahler += 1            # erhögen dosenzahler
+        Dose.dosenzahler += 1           # erhögen dosenzahler
         self.status_extern = 0
-        self.path = path_in          # pfad  main switcher
+        self.path = path_in             # pfad  main switcher
         self.dosen_nummer = Dose.dosenzahler
         self.myprint (DEBUG_LEVEL1, "--> dose {} dosen_init called, debug: {}  testmode: {}".format (self.dosen_nummer,debug_in,testmode_in))
         self.testmode = testmode_in
-        self.mqttc = mqttc_in                 # instanz mqtt client
+        self.mqttc = mqttc_in           # instanz mqtt client
         self.mqtt_status = mqtt_status_in
-        self.msg_variante = 1                      # default wert Test Pyload
+        self.msg_variante = 1           # default wert Test Pyload
         self.subscribe = 0
         self.time_last_aktion = 0               
         self.e = []
-        self.schaltart = 0
         self.debug_level2_mod = DEBUG_LEVEL2
         self.tmp = 0
+        self.schalt = ""                # hilfsfeld    
  # nun schaltart für die Dosen  aus config holen
         
         config=ConfigRead(self.debug)        # instanz der ConfigRead Class
@@ -83,9 +86,9 @@ class Dose(MyPrint):
         y=cfglist_dos.index(self.schalt)  + 1           # suche den Wert von schaltart aus Config-file
         self.schalt=cfglist_dos[y].decode()
      
-        self.tmp = "dose_" + str(self.dosen_nummer) + "_modus"
+        self.tmp = "dose_" + str(self.dosen_nummer) + "_schaltprio"
         y=cfglist_dos.index(self.tmp)  + 1           # suche den Wert von modus aus Config-file
-        self.modus_1 = int(cfglist_dos[y].decode())
+        self.schaltprio = int(cfglist_dos[y].decode())
 
         y=cfglist_dos.index("debug_schalt")  + 1           # suche den Wert von debug_schalt aus Config-file
         tmp = int(cfglist_dos[y].decode())
@@ -93,7 +96,7 @@ class Dose(MyPrint):
             self.debug_level2_mod  =  DEBUG_LEVEL0
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , alle schaltaktionen werden logged (in configfile)".format(self.dosen_nummer))
 
-        if self.modus_1 == 2 :
+        if self.schaltprio == 2 :
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , dose hat modus_1 = 2".format(self.dosen_nummer))
 
             
@@ -167,7 +170,7 @@ class Dose(MyPrint):
 # Funktion dispay_anzahl()  gibt status aus auf stdout
 #--------------------------------------------------------------------------
     def display_status(self):
-       self.myprint (DEBUG_LEVEL2, "Dose: {} Status intern {} Status extern {} Modus {} Zuhause {}".format (self.nummer, self.status_intern,self.status_extern,self.modus, self.zuhause))
+       self.myprint (DEBUG_LEVEL2, "Dose: {} Status intern {} Status extern {} Modus {} Zuhause {}".format (self.nummer, self.status_intern,self.status_extern,self.schaltmodus, self.zuhause))
        
 # Funktion set_zuhause()  schaltet dose aus, falls Modus nicht manuell ist, setzt externen Status
 #--------------------------------------------------------------------------
@@ -175,10 +178,10 @@ class Dose(MyPrint):
 # 
         self.myprint (self.debug_level2_mod ,  "--> dose {} set_zuhause called, zuhause: {}" .format (self.dosen_nummer, self.zuhause))
         self.zuhause=True
-        if self.modus==1: 
+        if self.schaltmodus == 1: 
             return            # wenn modus manuell mach nichts weiter
 
-        if self.modus_1 == 2: 
+        if self.schaltprio == 2: 
             return            # wenn modus_1 = 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
        
         self.time_last_aktion =  datetime.now()         # zeit merken 
@@ -193,9 +196,9 @@ class Dose(MyPrint):
 # 
         self.myprint (self.debug_level2_mod ,  "--> dose {} set_nicht zuhause called, zuhause: {}" .format (self.dosen_nummer, self.zuhause))
         self.zuhause=False
-        if self.modus == 1: 
+        if self.schaltmodus == 1: 
             return   # manuell, wir machen nichts
-        if self.modus_1 == 2: 
+        if self.schaltprio == 2: 
             return            # wenn modus_1 = 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
        
         self.time_last_aktion =  datetime.now()         # zeit merken 
@@ -214,7 +217,7 @@ class Dose(MyPrint):
     def set_dosen_wiestatus(self):
 # 
         self.myprint (self.debug_level2_mod ,  "--> dose {} set_dose_wiestatus called, zuhause: {}" .format (self.dosen_nummer, self.zuhause))
-        if self.modus == 1: 
+        if self.schaltmodus == 1: 
             return   # manuell, wir machen nichts
 
         self.time_last_aktion =  datetime.now()         # zeit merken 
@@ -238,7 +241,7 @@ class Dose(MyPrint):
         self.myprint (self.debug_level2_mod ,  "--> dose {} set_manuell called, how: {}  zuhause: {}".format (self.dosen_nummer,how, self.zuhause))
     
         self.status_extern = how
-        self.modus = 1
+        self.schaltmodus = 1
         self.time_last_aktion =  datetime.now()         # zeit merken 
 
         self.myprint (self.debug_level2_mod, "dose {} manuell schalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
@@ -247,12 +250,12 @@ class Dose(MyPrint):
 # ---- Funktion reset manuell ------------------------------
 #   setzt Modus auf Auto (0) und schaltet Dose gemäss dem aktuellen internen Status
     def reset_manuell(self):
-        self.myprint (self.debug_level2_mod,  "--> dose {} reset_manuell called, modus: {}, status_intern: {}".format (self.dosen_nummer, self.modus, self.status_intern))
-        if self.modus == 0:
+        self.myprint (self.debug_level2_mod,  "--> dose {} reset_manuell called, modus: {}, status_intern: {}".format (self.dosen_nummer, self.schaltmodus, self.status_intern))
+        if self.schaltmodus == 0:
             return                  # wir behandlen nur Dosen mit modus manuell
         self.time_last_aktion =  datetime.now()         # zeit merken 
             
-        self.modus = 0
+        self.schaltmodus = 0
         if self.status_intern == 1:   
             self.status_extern = 1
             self.myprint (self.debug_level2_mod , "dose {} reset_manuell: einschalten , schaltart: {}".format (self.dosen_nummer, self.schaltart))
@@ -268,16 +271,16 @@ class Dose(MyPrint):
 #   schaltet dose gemäss how, jedoch nur, wenn Modus 'Auto' ist (bei Modus 'Manuell' wird nicht geschaltet)  
     def set_auto(self, how):
 # how= 1 für ein, 0 für aus
-        self.myprint (self.debug_level2_mod ,  "--> dose {} set_auto called, how: {}  modus: {}  zuhause: {}".format (self.dosen_nummer,how,self.modus,self.zuhause))
+        self.myprint (self.debug_level2_mod ,  "--> dose {} set_auto called, how: {}  modus: {}  zuhause: {}".format (self.dosen_nummer,how,self.schaltmodus,self.zuhause))
    
         self.status_intern = how      # interner status wird in jedem Fall nachgeführt
  
         if self.zuhause :
-            if self.modus_1 == 1:
+            if self.schaltprio == 1:
                 return                  # wenn jemand da ist wird bloss interner status nachgeführt
     
     
-        if self.modus == 0:           # Nur wirklich schalten, wenn modus auto ist - externer status nachführen
+        if self.schaltmodus == 0:           # Nur wirklich schalten, wenn modus auto ist - externer status nachführen
             self.status_extern=how
             self.time_last_aktion =  datetime.now()         # zeit merken 
 
@@ -290,7 +293,7 @@ class Dose(MyPrint):
 #   bei Funk wollen wir nicht so lange funken, bis alles abgearbeitet ist
     def set_auto_virtuell(self, how):
 # how= 1 für ein, 0 für aus
-        self.myprint (DEBUG_LEVEL2,  "--> dose {} set_auto_virtuell called, how: {}  modus: {}".format (self.dosen_nummer,how,self.modus))
+        self.myprint (DEBUG_LEVEL2,  "--> dose {} set_auto_virtuell called, how: {}  modus: {}".format (self.dosen_nummer,how,self.schaltmodus))
    
         self.status_intern=how      # interner status wird in jedem Fall nachgeführt
 
@@ -315,10 +318,10 @@ class Dose(MyPrint):
         
             if payload_in == "ON" :
                 self.status_extern = 1 
-                self.modus = 1
+                self.schaltmodus = 1
             if payload_in == "OFF" :
                 self.status_extern = 0 
-                self.modus = 1
+                self.schaltmodus = 1
            
  
 
@@ -344,13 +347,13 @@ class Dose(MyPrint):
         self.myprint (DEBUG_LEVEL2,  "--> dose {} show_status called".format (self.dosen_nummer))
 
         ret=str(self.status_extern)
-        if  self.modus==1:
+        if  self.schaltmodus == 1:
             ret = ret+"m"
             
-        if self.zuhause and self.modus_1 == 1:
+        if self.zuhause and self.schaltprio == 1:
             ret = ret+"h"
             
-        if self.modus_1 == 2:
+        if self.schaltprio == 2:
             ret = ret+"i"                       # überschreibt alle anderen werte
         pass
         ret = ret + ":" + str(self.schaltart)     # die schaltart noch dazu
