@@ -247,13 +247,13 @@ def do_stuff_regular():
     if gpio_home_switch >  0:           # kein Kippschalter definiert, also nichts tun
         check_home_kippschalter()           # fuer Switcher mit Kippschalter (kommt bald weg)
     
-    ret_ipc, ret_dose, term_verlangt, ret_debug = ipc_instance.ipc_check(build_stat)		# check if request from client came in - and answer it. juni201
+    ret_ipc, ret_dose, term_verlangt, ret_debug = ipc_instance.ipc_check(status_erstellen)		# check if request from client came in - and answer it. juni201
 #    debug = ret_debug               # uebernehme debug
 #    mypri.set_debug_level(debug)   # ausgebaut okt. 2018
     
     mypri.myprint (DEBUG_LEVEL3,  "ipc_check returns: ret_ipc:{}  ret_dose:{}  ret_debug:{}".format(ret_ipc, ret_dose, ret_debug ))
 
-    handle_ipc(ret_ipc,ret_dose)    # behandlung der Antwort
+    ipc_behandeln (ret_ipc,ret_dose)    # behandlung der Antwort
          
     status_laueft_seit = ( date.today() - start_switcher).days     # ermitteln, wieviele Tage der Switcher laeuft
 
@@ -372,7 +372,7 @@ def blink_led(blink_pin):  # blink led 3 mal und warten  --> in eigenem Thread !
 
 #--------------baue status Antwort ---------------------------------------
 # wird gesandt, wenn Request 'stat' eingetroffen ist.
-def build_stat(was):
+def status_erstellen(was):
     
 # Achtung: wir reden von Dose 1 bis 4 in der Umgangssprache.
 # aber die Liste dosen[] hat index 0 bis (max_anzahl-1)
@@ -387,7 +387,7 @@ def build_stat(was):
 #    print (get_size(my_wetter))
     
     status=""
-    mypri.myprint (DEBUG_LEVEL2,  "--> build_stat() called, was: {}".format(was))
+    mypri.myprint (DEBUG_LEVEL2,  "--> status_erstellen() called, was: {}".format(was))
 
     convert = (str(w) for w in info_fuer_webserver)     # string aus liste erstellen
     info_string = ''.join(convert)                      # info meldungen an den Webserver
@@ -436,7 +436,7 @@ def build_stat(was):
     mypri.myprint (DEBUG_LEVEL2, "actionpars.get_season_info() bringt:")
     mypri.myprint (DEBUG_LEVEL2, sais)    
     
-    mypri.myprint (DEBUG_LEVEL3,  "build_stat aktive Saison ist: {}".format(aktive_saison))
+    mypri.myprint (DEBUG_LEVEL3,  "status_erstellen aktive Saison ist: {}".format(aktive_saison))
     if aktive_saison == 0:
         and1=1
         and2=2
@@ -468,7 +468,7 @@ def build_stat(was):
         else:
             stat_klein.pop()                        # hinterstes Element der Liste weg
             stat_klein.pop()                        # hinterstes Element der Liste weg
-        mypri.myprint (DEBUG_LEVEL2,  "build_stat: sais: {}".format(stat_klein))
+        mypri.myprint (DEBUG_LEVEL2,  "status_erstellen: sais: {}".format(stat_klein))
   
         
         stat_k=json.dumps(stat_klein)          # umwandeln in JSON Object (also ein String)
@@ -568,11 +568,11 @@ def build_stat(was):
 
 #-------- Behandlung der Antwort, die via IPC vom Client kam - falls es noch was zu tun gibt
 #   Parameter (kommen von ipc_check(): funktion und dosennummer
-def  handle_ipc(func,wdose):
+def  ipc_behandeln (func,wdose):
 
     global manuell_reset
     
-    mypri.myprint (DEBUG_LEVEL2,  "--> handle_ipc() gestartet mit func: %d  wdose: %d" % (func,wdose))	#        juni2018
+    mypri.myprint (DEBUG_LEVEL2,  "--> ipc_behandeln() gestartet mit func: %d  wdose: %d" % (func,wdose))	#        juni2018
 
 # Achtung: wir reden von Dose 1 bis 4 in der Umgangssprache.
 # aber die Liste dosen[] hat index 0 bis (max_anzahl-1)
@@ -609,7 +609,7 @@ def  handle_ipc(func,wdose):
         pass      
     
     else:
-        mypri.myprint (DEBUG_LEVEL0, "handle_ipc:  falsche func: {}".format(func))
+        mypri.myprint (DEBUG_LEVEL0, "ipc_behandeln:  falsche func: {}".format(func))
 
     
     return
@@ -695,7 +695,7 @@ def aktionen_pro_tag (liste, wochentag):
 
 
 #  -------- Function INit ------------------------
-def initswitcher(start):
+def init_switcher(start):
     global actions_only,wochentag
     global GPIO, dosen
     global list_tage,list_dose
@@ -741,7 +741,7 @@ def initswitcher(start):
         modulename = path.replace(  dirname+"/", "")      # juni2018
         
         mypri.myprint (DEBUG_LEVEL0,  "Gestartet: {} Version: {} Python: {}  Startart: {}  Hostname: {}".format (modulename,switcher_version, python_version, startart,hostname))   # print signatur                                                           
-        mypri.myprint (DEBUG_LEVEL0,  "--> Initswitcher gestartet")	# wir starten       juni2018
+        mypri.myprint (DEBUG_LEVEL0,  "--> init_switcher gestartet")	# wir starten       juni2018
     
         config = ConfigRead(debug)        # instanz der ConfigRead Class
         
@@ -954,14 +954,14 @@ def initswitcher(start):
 
     except KeyboardInterrupt:
     # aufraeumem
-        mypri.myprint (DEBUG_LEVEL0,  "Keyboard Interrupt in initswitcher, alle Dosen OFF und clean up pins")
+        mypri.myprint (DEBUG_LEVEL0,  "Keyboard Interrupt in init_switcher, alle Dosen OFF und clean up pins")
         error = 9
         term_verlangt = 1                       # signale to thread to stop
         if fortschritt > 0:
             terminate(fortschritt)
     except Exception:
         #       etwas schlimmes ist passiert, wir loggen dies mit Methode myprint_exc der MyPrint Klasse
-        mypri.myprint_exc ("initswitcher: etwas Schlimmes ist passiert.... !")
+        mypri.myprint_exc ("init_switcher: etwas Schlimmes ist passiert.... !")
         error = 9
         term_verlangt = 1                       # signale to thread to stop
         if fortschritt > 0:
@@ -977,11 +977,11 @@ def initswitcher(start):
 
 
 
-# End Function initswitcher**************************
+# End Function init_switcher**************************
 
 
 # --- here is the beef  -------------------------------------------------------------
-def runswitch():
+def run_switchter():
 
     global debug,actions_only,wochentag,status_currtime
     global hhmm_tag  , start_tag                  
@@ -990,6 +990,8 @@ def runswitch():
     global aktive_saison, saison_ist_simuliert, liste_aller_tage
     global list_aktionen_past, list_aktionen_zukunft
 
+
+    mypri.myprint (DEBUG_LEVEL0,  "--> run_switcher gestartet")	# wir starten       juni2018
 
     
 #  -- Funktion: warten bis der nächste wochentag wirklich eintrifft ------------------------------
@@ -1039,12 +1041,12 @@ def runswitch():
  # -------------------------------------------------      
    
    
-   # hier beginnt runswitch() ------------------------
+   # hier beginnt run_switchter() ------------------------
     if debug: 
         sleep(3) 
       
     hhmm_tag = [datetime.now().strftime("%H.%M"),datetime.today().strftime("%w")]    # aktuelle Zeit holen
-    mypri.myprint (DEBUG_LEVEL0,   "--> Switcher2 Function runswitch(): start switching. Zeit und Wochentag: {}".format(hhmm_tag))
+    mypri.myprint (DEBUG_LEVEL0,   "--> Switcher2 Function run_switchter(): start switching. Zeit und Wochentag: {}".format(hhmm_tag))
     
     time_old = datetime.now()                           # fuer Zeitmessung
 
@@ -1200,7 +1202,7 @@ def runswitch():
     
         terminate(9)
     
-# End Funtion runswitch ********************************
+# End Funtion run_switchter ********************************
 
 #*********  endebehandlung **********
 def terminate(was):
@@ -1242,10 +1244,10 @@ if __name__ == '__main__':
 
     forground=1     # zeigt, dass Programm im Vordergrund laeuft, Main wurde gerufen
     options=argu()                          # get commandline args
-    ret=initswitcher(0)  # init stuff, parameter 0 heisst : im switcher2.py gestartet
+    ret=init_switcher(0)  # init stuff, parameter 0 heisst : im switcher2.py gestartet
     if ret == 9:
         sys.exit(2)
-    runswitch()         #  here is the beef, runs forever
+    run_switchter()         #  here is the beef, runs forever
     
     terminate(9)         #  Abschlussvearbeitung
 
