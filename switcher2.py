@@ -969,7 +969,6 @@ def init_switcher(start):
     finally: 
     # hierher kommen wir immer, ob Keyboard Exception oder andere Exception oder keine Exception
         sleep(1)
-        mymqtt_client.mqtt_start()
 
         mypri.myprint (DEBUG_LEVEL0,  "--> Initswitcher done")	# wir starten       juni2018
         return(error)
