@@ -40,14 +40,14 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>18.00</ON>
+  	<ON>17.05</ON>
   	<OFF>23.40</OFF>
   </sequence>
   </tag>
   
 <tag nummer = "2"> 
   <sequence>
-  	<ON>17.40</ON>
+  	<ON>17.15</ON>
   	<OFF>23.05</OFF>
   </sequence>
   </tag>
@@ -58,7 +58,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>17.45</ON>
+  	<ON>17.12</ON>
   	<OFF>22.40</OFF>
   </sequence>
    </tag>
@@ -69,7 +69,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>17.30</ON>
+  	<ON>17.05</ON>
   	<OFF>23.10</OFF>
   </sequence>
   </tag>
@@ -80,7 +80,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>17.30</ON>
+  	<ON>17.12</ON>
   	<OFF>22.50</OFF>
   </sequence>
   </tag>
@@ -91,7 +91,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>17.40</ON>
+  	<ON>17.10</ON>
   	<OFF>23.05</OFF>
   </sequence>
   </tag>
@@ -106,7 +106,7 @@ Dose Nummer 2  Wintergarten *************************** Dose 2
 
 <tag nummer = "0">
   <sequence>
-  	<ON>19.35</ON>
+  	<ON>18.35</ON>
   	<OFF>21.25</OFF>
   </sequence>
    <sequence>
@@ -117,7 +117,7 @@ Dose Nummer 2  Wintergarten *************************** Dose 2
   
 <tag nummer = "1"> 
  <sequence>
-  	<ON>19.15</ON>
+  	<ON>18.15</ON>
   	<OFF>21.14</OFF>
   </sequence>
    <sequence>
@@ -128,7 +128,7 @@ Dose Nummer 2  Wintergarten *************************** Dose 2
   
 <tag nummer = "2"> 
  <sequence>
-  	<ON>19.50</ON>
+  	<ON>18.50</ON>
   	<OFF>21.15</OFF>
   </sequence>
    <sequence>
