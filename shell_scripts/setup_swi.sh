@@ -10,7 +10,7 @@ then
 	echo "$file bereits vorhanden."
 else
 	echo "$file not found, also kopiere"
-	cp -n -v mosquitto_stuff/my_mosquitto.conf /etc/mosquitto/conf.d
+	cp -n -v ../mosquitto_stuff/my_mosquitto.conf /etc/mosquitto/conf.d
 fi
 
 file="/etc/mosquitto/passw.txt"
@@ -19,7 +19,7 @@ then
 	echo "$file bereits vorhanden."
 else
 	echo "$file not found, also kopiere"
-	cp -n -v mosquitto_stuff/passw.txt /etc/mosquitto
+	cp -n -v ../mosquitto_stuff/passw.txt /etc/mosquitto
 fi
 
 echo "Files fuer mosquitto gemacht"
@@ -33,7 +33,7 @@ then
 	echo "$file bereits vorhanden."
 else
 	echo "$file not found, also kopiere"
-    cp -n -v shell_scripts/switcher2.sh /etc/init.d
+    cp -n -v switcher2.sh /etc/init.d
 fi
 
 file="/etc/init.d/swserver2.sh"
@@ -42,7 +42,7 @@ then
 	echo "$file bereits vorhanden."
 else
 	echo "$file not found, also kopiere"
-    cp -n -v shell_scripts/swserver2.sh /etc/init.d
+    cp -n -v swserver2.sh /etc/init.d
 fi
 
 chmod 755 /etc/init.d/switcher2.sh
