@@ -29,70 +29,70 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
 
 <tag nummer = "0">
   <sequence>
-  	<ON>18.30</ON>
-  	<OFF>23.40</OFF>
+  	<ON>17.00</ON>
+  	<OFF>23.50</OFF>
   </sequence>
   </tag>
   
 <tag nummer = "1"> 
  <sequence>
-  	<ON>00.40</ON>
-  	<OFF>00.55</OFF>
+  	<ON>00.01</ON>
+  	<OFF>00.25</OFF>
   </sequence>
   <sequence>
   	<ON>17.05</ON>
-  	<OFF>23.40</OFF>
+  	<OFF>23.55</OFF>
   </sequence>
   </tag>
   
 <tag nummer = "2"> 
   <sequence>
   	<ON>17.15</ON>
-  	<OFF>23.05</OFF>
+  	<OFF>23.50</OFF>
   </sequence>
   </tag>
   
 <tag nummer = "3"> 
  <sequence>
-  	<ON>00.40</ON>
-  	<OFF>00.55</OFF>
+  	<ON>00.05</ON>
+  	<OFF>00.45</OFF>
   </sequence>
   <sequence>
-  	<ON>17.12</ON>
-  	<OFF>22.40</OFF>
+  	<ON>17.00</ON>
+  	<OFF>23.50</OFF>
   </sequence>
    </tag>
    
 <tag nummer = "4"> 
  <sequence>
-  	<ON>00.40</ON>
+  	<ON>00.10</ON>
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
   	<ON>17.05</ON>
-  	<OFF>23.10</OFF>
+  	<OFF>23.52</OFF>
   </sequence>
   </tag>
 
 <tag nummer = "5"> 
  <sequence>
-  	<ON>00.40</ON>
-  	<OFF>00.55</OFF>
+  	<ON>00.12</ON>
+  	<OFF>00.45</OFF>
   </sequence>
   <sequence>
-  	<ON>17.12</ON>
-  	<OFF>22.50</OFF>
+  	<ON>17.09</ON>
+  	<OFF>23.55</OFF>
   </sequence>
   </tag>
   
 <tag nummer = "6"> 
  <sequence>
-  	<ON>00.40</ON>
-  	<OFF>00.55</OFF>
+  	<ON>00.14</ON>
+  	<OFF>00.45</OFF>
   </sequence>
   <sequence>
   	<ON>17.10</ON>
-  	<OFF>23.05</OFF>
+  	<OFF>23.55</OFF>
   </sequence>
   </tag>
 
