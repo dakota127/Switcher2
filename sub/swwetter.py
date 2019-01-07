@@ -58,7 +58,7 @@ class Wetter (MyPrint):
         self.woher = ""
         self.temp = 0
         self.hum = 0
-        self.bat = ""
+        self.bat = ""                       # batterie Zustand string
         self.anzahl_meldungen = 0
         self.dattime = 0
         self.timenow = 0
@@ -222,7 +222,7 @@ class Wetter (MyPrint):
             self.myprint (DEBUG_LEVEL2, "Wetter: min humi found, {}".format(self.inout[self.inoutdoor]))
     
         
-        self.wetter_data[self.inoutdoor][15] = int(self.bat)    # battery level
+        self.wetter_data[self.inoutdoor][15] = self.bat    # battery level
         
         # nun noch status setzen      
         if not self.wetter_data [self.inoutdoor][0] == 1:          # verändere, wenn anders als 1 (verbunden) ist
