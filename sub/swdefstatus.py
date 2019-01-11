@@ -77,7 +77,7 @@ status_wetter_innen = [
                ["Gemessen am", "" ], 
                ["Batterie Innen", ""],  
                 ["Sensorstatus", ""],  
-                ["Seit", ""],                          
+                ["Dauer ms", ""],                          
 
                 ]
 
@@ -95,7 +95,7 @@ status_wetter_aussen = [
                ["Gemessen am", "" ], 
                ["Batterie Aussen", ""],            
                 ["Sensorstatus", ""],  
-                ["Seit", ""],                          
+                ["Dauer ms", ""],                          
 
                 ]
 

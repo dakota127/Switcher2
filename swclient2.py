@@ -167,6 +167,7 @@ def printReply(meldung):
         return
     print ("--------------------------------------")
 
+    print (meld)
 
     for i in range(len(meld)):
         print ("{:18}:  {:<18}".format (meld[i][0]  ,meld[i][1]))

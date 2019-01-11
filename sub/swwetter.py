@@ -52,6 +52,7 @@ class Wetter (MyPrint):
         Wetter.wetterzahler +=1            # erhögen wetterzähler
         self.intemp = 0
         self.outtemp = 0
+        self.elapsed_time = ""
         self.inoutdoor = 0
         self.tempe = 0
         self.humi = 0
@@ -59,6 +60,7 @@ class Wetter (MyPrint):
         self.temp = 0
         self.hum = 0
         self.bat = ""                       # batterie Zustand string
+        self.sensor = ""                    # sensor status
         self.anzahl_meldungen = 0
         self.dattime = 0
         self.timenow = 0
@@ -70,14 +72,15 @@ class Wetter (MyPrint):
         self.wetterlist = []
 
  #      liste of list: hier werden die Wetterdaten versorgt 
-        self.wetter_data = [ [0 for i in range(16)] for z in range(2) ]
+        self.wetter_data = [ [0 for i in range(17)] for z in range(2) ]
 
-        self.wetter_data [0][0] = 0         # init  werte
-        self.wetter_data [1][0] = 0         # init  werte   
+        self.wetter_data [0][0] = "dddd"         # init  werte       sensor status
+        self.wetter_data [1][0] = "ddd"        # init  werte       sensor status
 
         self.wetter_data [0][1] = self.dattime         # init  werte
         self.wetter_data [1][1] = self.dattime         # init  werte
-
+        self.wetter_data [0][2] = 0         # init  werte nichts gekommen
+        self.wetter_data [1][2] = 0         # init  werte
         self.wetter_data [0][3] = ""         # init  werte
         self.wetter_data [1][3] = ""         # init  werte
         self.wetter_data [0][8] = ""         # init  werte
@@ -88,14 +91,15 @@ class Wetter (MyPrint):
         self.wetter_data [1][12] = ""         # init  werte
         self.wetter_data [0][14] = ""         # init  werte
         self.wetter_data [1][15] = ""         # init  werte
-        
+        self.wetter_data [0][16] = ""         # init  werte
+        self.wetter_data [1][16] = ""         # init  werte
         self.wetter_data [0][9] = 99         # init minmale werte
         self.wetter_data [0][13] = 99         # init minmale werte
         self.wetter_data [1][9] = 99         # init minmale werte
         self.wetter_data [1][13] = 99         # init minmale werte
 # wetter_data = [ [0 for z in range(8)] for z in range(2) ]
                                     # Liste mit 2 Listen, jeweils:
-                                    # index 0: Sensorstatus: 0: noch nichts erhalten, 1: verbunden, 2: Verbindung unterbrochen
+                                    # index 0: Sensorstatus, string vom sensor geliefert, init "nicht bekannt"
                                     # index 1: datumzeit des status
                                     # index 2: fehlercode
                                     # index 3: Zeit letzte gemommene Meldung (string)
@@ -110,10 +114,10 @@ class Wetter (MyPrint):
                                     # index 12: Datum maximale Humidity
                                     # index 13: minimale Humidity
                                     # index 14: Datum minimale Humidity
-                                    # index 15: battery level  1=ok, 0=low
-
+                                    # index 15: battery status (string von sensor)
+                                    # index 16: elapsed time (string von sen
         self.inout = {0:'Indoor', 1:'Outdoor'}  
-        self.sensorstat = {0:'Noch nicht verbunden', 1:'Verbunden', 2:'Verbindung unterbrochen'}        
+     
         self.errorcode=0    # init aktor ok
 
         self.wetter_data[0][4] = datetime.now()          # Init
@@ -129,12 +133,12 @@ class Wetter (MyPrint):
     def last_will(self,payload):
         self.myprint (DEBUG_LEVEL1,"--> wetter: last_will() called  payload: {}".format( payload))
         if  payload.find("indoor") >= 0:
-            self.wetter_data [0][0] = 2
+            self.wetter_data [0][0] = 2             # status = 2  wenn last will gekommen ist
             self.wetter_data [0][1] = self.dattime   # datum/zeit dazu
             self.wetter_data[0][2] = 0               # clear error code
             return
         if  payload.find("outdoor") >= 0:    
-            self.wetter_data [1][0] = 2
+            self.wetter_data [1][0] = 2            # status = 2  wenn last will gekommen ist
             self.wetter_data [1][1] = self.dattime   # datum/zeit dazu
             self.wetter_data[1][2] = 0               # clear error code
 
@@ -146,14 +150,14 @@ class Wetter (MyPrint):
         self.myprint (DEBUG_LEVEL1,"--> wetter: store_wetter_data() called  payload: {}".format( payload))
     
         try:
-            self.woher, self.temp, self.hum, self.bat = payload.split('/')
+            self.woher, self.bat, self.sensor, self.elapsed_time, self.temp, self.hum,  = payload.split('/')
 
         except:
             self.myprint (DEBUG_LEVEL0,"--> wetter: store_wetter_data(): mqtt callback split nicht ok")
 
             return
-#        print (self.woher, self.temp, self.hum, self.bat)
-    
+   #     print (self.woher, self.temp, self.hum, self.bat, self.elapsed_time, self.sensor)
+   #     print (type(self.elapsed_time))
     
         self.inoutdoor = -8
         if  self.woher.find("outdoor") >= 0:
@@ -192,7 +196,7 @@ class Wetter (MyPrint):
             return
 # Werte ok, wir speichern....
 
-        self.wetter_data[self.inoutdoor][2] = 0      # clear fehler
+        self.wetter_data[self.inoutdoor][2] = 1      # 1: eine Meldung gekommen
         self.wetter_data[self.inoutdoor][3] = self.dattime          # Zeit der meldung
         self.wetter_data[self.inoutdoor][4] = datetime.now()          # Zeit der meldung
 
@@ -223,11 +227,13 @@ class Wetter (MyPrint):
     
         
         self.wetter_data[self.inoutdoor][15] = self.bat    # battery level
+        self.wetter_data[self.inoutdoor][16] = self.elapsed_time
+        self.wetter_data [self.inoutdoor][0] = self.sensor  # sensor status
         
         # nun noch status setzen      
-        if not self.wetter_data [self.inoutdoor][0] == 1:          # verändere, wenn anders als 1 (verbunden) ist
-            self.wetter_data [self.inoutdoor][0] = 1            # setze sensorstatus auf 1 (verbunden)
-            self.wetter_data [self.inoutdoor][1] = self.dattime   # datum/zeit dazu
+ #       if not self.wetter_data [self.inoutdoor][0] == 1:          # verändere, wenn anders als 1 (verbunden) ist
+  #          self.wetter_data [self.inoutdoor][0] = 1            # setze sensorstatus auf 1 (verbunden)
+   #         self.wetter_data [self.inoutdoor][1] = self.dattime   # datum/zeit dazu
      
 
         self.myprint (DEBUG_LEVEL2, "Wetterdata indoor:  {}".format(self.wetter_data[0]))
@@ -261,9 +267,12 @@ class Wetter (MyPrint):
  
         self.myprint (DEBUG_LEVEL1,"--> get_wetter_data_all() called  ")
 
+
+#        print (status_wetter_innen)
+
 # indoor behandeln
-        if  self.wetter_data[0][0] == 0:    # nichts gekommen von indoor
-            self.intemp = "Keine Werte"   
+        if  self.wetter_data[0][2] == 0:    # nichts gekommen von indoor
+            self.intemp = "Noch Keine Werte"   
         else:
             self.intemp = str(self.wetter_data[0][5])       # temp indoor
             ret, stri = self.time_delta (self.wetter_data[0][4],0)    # letzte Messung indoor
@@ -273,7 +282,7 @@ class Wetter (MyPrint):
             self.intemp = " Fehler Read Sensor"
 
 # dann outdoor behandeln   
-        if  self.wetter_data[1][0] == 0:    # check sensorstatus  0: nichts gekommen von outdoor
+        if  self.wetter_data[1][2] == 0:    # check sensorstatus  0: nichts gekommen von outdoor
             self.outtemp = "Noch keine Werte"   
         else:
             self.outtemp = str(self.wetter_data[1][5])
@@ -282,10 +291,8 @@ class Wetter (MyPrint):
       
         if self.wetter_data[1][2] == 9:
             self.intemp = " Fehler Read Sensor"
-
-
-#        print (status_wetter_innen)
-
+            
+            
 # nun abfuellen in die Liste Indoor
 
         status_wetter_innen[0][1] = self.intemp                # in temp
@@ -304,8 +311,9 @@ class Wetter (MyPrint):
         status_wetter_innen[10][1] = self.wetter_data[0][14]     # datum dazu
      
         status_wetter_innen[11][1] = str(self.wetter_data[0][15])     # batterie innen
-        status_wetter_innen[12][1] = self.sensorstat [int(self.wetter_data[0][0])]     # Sensorstatus
-        status_wetter_innen[13][1] = self.wetter_data[0][1]     # sensorstatus datum/zeit     
+ #       status_wetter_innen[12][1] = self.sensorstat [int(self.wetter_data[0][0])]     # Sensorstatus
+        status_wetter_innen[12][1] = self.wetter_data[0][0]     # sensorstatus     
+        status_wetter_innen[13][1] = self.wetter_data[0][16]     # dauer im ms  (sensor)    
 
 
         
@@ -326,8 +334,9 @@ class Wetter (MyPrint):
 
         status_wetter_aussen[11][1] = str(self.wetter_data[1][15])     # batterie aussen
 
-        status_wetter_aussen[12][1] = self.sensorstat [int(self.wetter_data[1][0])]     # bSensorstatus
-        status_wetter_aussen[13][1] = self.wetter_data[1][1]     # sensorstatus datum/zeit     
+ #       status_wetter_aussen[12][1] = self.sensorstat [int(self.wetter_data[1][0])]     # bSensorstatus
+        status_wetter_innen[12][1] = self.wetter_data[0][0]     # sensorstatus             
+        status_wetter_aussen[13][1] = self.wetter_data[1][16]     # dauer im ms  (sensor)      
         
         
         
@@ -348,7 +357,7 @@ class Wetter (MyPrint):
 
 # zuerst inddor behandeln
 
-        if  self.wetter_data[0][0] == 0:   # check sensorstatus  0: noch nicht verbunden
+        if  self.wetter_data[0][2] == 0:   # check fehlercode  0: noch keine meldung gekommen
             self.intemp = "Noch keine Werte"   
         elif self.wetter_data[0][0] == 2:   # check sensorstatus  2: Verbindung verloren
             self.intemp = "Verbindung unterbrochen"    
@@ -362,7 +371,7 @@ class Wetter (MyPrint):
 
         
 # dann outdoor behandeln   
-        if  self.wetter_data[1][0] == 0:   # check sensorstatus  0: noch nicht verbunden
+        if  self.wetter_data[1][2] == 0:   # check fehlercode  0: noch keine meldung gekommen
             self.outtemp = "Noch keine Werte"   
         elif self.wetter_data[1][0] == 2:   # check sensorstatus  2: Verbindung verloren
             self.outtemp = "Verbindung unterbrochen"    
