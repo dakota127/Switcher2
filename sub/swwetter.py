@@ -74,8 +74,8 @@ class Wetter (MyPrint):
  #      liste of list: hier werden die Wetterdaten versorgt 
         self.wetter_data = [ [0 for i in range(17)] for z in range(2) ]
 
-        self.wetter_data [0][0] = "dddd"         # init  werte       sensor status
-        self.wetter_data [1][0] = "ddd"        # init  werte       sensor status
+        self.wetter_data [0][0] = ""         # init  werte       sensor status
+        self.wetter_data [1][0] = ""        # init  werte       sensor status
 
         self.wetter_data [0][1] = self.dattime         # init  werte
         self.wetter_data [1][1] = self.dattime         # init  werte
@@ -311,7 +311,6 @@ class Wetter (MyPrint):
         status_wetter_innen[10][1] = self.wetter_data[0][14]     # datum dazu
      
         status_wetter_innen[11][1] = str(self.wetter_data[0][15])     # batterie innen
- #       status_wetter_innen[12][1] = self.sensorstat [int(self.wetter_data[0][0])]     # Sensorstatus
         status_wetter_innen[12][1] = self.wetter_data[0][0]     # sensorstatus     
         status_wetter_innen[13][1] = self.wetter_data[0][16]     # dauer im ms  (sensor)    
 
@@ -334,8 +333,7 @@ class Wetter (MyPrint):
 
         status_wetter_aussen[11][1] = str(self.wetter_data[1][15])     # batterie aussen
 
- #       status_wetter_aussen[12][1] = self.sensorstat [int(self.wetter_data[1][0])]     # bSensorstatus
-        status_wetter_innen[12][1] = self.wetter_data[0][0]     # sensorstatus             
+        status_wetter_aussen[12][1] = self.wetter_data[1][0]     # sensorstatus             
         status_wetter_aussen[13][1] = self.wetter_data[1][16]     # dauer im ms  (sensor)      
         
         
