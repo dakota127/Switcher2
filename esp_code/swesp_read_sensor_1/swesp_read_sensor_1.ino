@@ -76,11 +76,13 @@
 #endif
 
 //Static IP address configuration
-IPAddress staticIP  (192, 168, 1, 161); //ESP static ip
+IPAddress staticIP  (192, 168, 1, 999); //ESP static ip
 IPAddress gateway   (192, 168, 1, 1);   //IP Address of your WiFi Router (Gateway)
 IPAddress subnet    (255, 255, 255, 0);  //Subnet mask
 IPAddress dns    (8, 8, 8, 8);  //DNS
 
+const int ipadr_indoor = 161;         // pos 3 der IPAdr, wird zur runtime gesetzt, 
+const int ipadr_outdoor = 162;         // nachdem indoor oder outdoor bekannt ist
 
 Ticker sleepTicker;
 Adafruit_BME280 bme; // I2C
@@ -127,7 +129,7 @@ int       value = 0;
 String    batt_status;
 char*     topic = "switcher2/wetter/data";
 char*     topic_lw = "switcher2/wetter/lw";
-int       inout_door ;
+int       inout_door ;       // HIGH: indoor, LOW: outdoor
 String    last_will_msg = "Verbindung verloren zu Sensor: ";
 String    the_sketchname;
 unsigned long currentMillis;
@@ -182,7 +184,7 @@ void setup() {
   DEBUGPRINT1 ("sleeptime: ");
   DEBUGPRINTLN1 (sleepTimeS);
 
-  pinMode(indoor_outdoor_pin, INPUT);   // defines indoor-outdoor
+  pinMode(indoor_outdoor_pin, INPUT_PULLUP);   // defines indoor-outdoor
   pinMode(adc_switch_pin, OUTPUT);      // Spannungsteiler ein/aus     
   digitalWrite(adc_switch_pin, LOW);    // Spannungsteiler aus
   
@@ -202,17 +204,23 @@ void setup() {
   DEBUGPRINT1 ("Connecting to: ");
   DEBUGPRINTLN1 (wifi_ssid);
 
+// setzt static IP je nach indoor/outdoor
+  if (inout_door == HIGH) {staticIP[3] = ipadr_indoor;}
+  else {staticIP[3] = ipadr_outdoor;}
+      
+  WiFi.mode(WIFI_STA);
   WiFi.config( staticIP, gateway, subnet ,dns);  
   WiFi.begin( wifi_ssid, wifi_password ); 
+  
   elapsed = millis() - startTime;  // Zeit Messung <------------------------------
-  Serial.print("Until wifi setup msec: "); // time since program started
+  Serial.print("bis nach wifi setup msec: "); // time since program started
   Serial.println (elapsed);
     
   // default settings for bme280 I2C
   sensor_status = bme.begin();  
   if (!sensor_status) {
      DEBUGPRINTLN0 ("Could not find a valid BME280 sensor, check wiring!");
- //    while (1);         // hier noch zu verbessern !!! XXXX
+ //    while (1);        
    }
 
    if (sensor_status) {
@@ -541,7 +549,8 @@ int wifi_status = WiFi.status();
   DEBUGPRINTLN1  (WiFi.localIP());
   DEBUGPRINT1  ("Anz retries: ");
   DEBUGPRINTLN1  (retries);
- 
+  DEBUGPRINTLN1  ("\nWiFi Details:");
+  WiFi.printDiag(Serial);
 
 }
 
