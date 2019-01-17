@@ -4,9 +4,9 @@
     mit Deep Sleep
 
     topic für switcher 2 wetter ist : 'switcher2/wetter/data'
-    payload :   indoor/battstatus/sensorstatus/Elapsed/TEMP/HUM
+    payload :   indoor/battstatus/sensorstatus/elapsed_time_ms/TEMP/HUM
     oder
-    payload :   outdoor/battstatus/sensorstatus/Elapsed/TEMP/HUM
+    payload :   outdoor/battstatus/sensorstatus/elapsed_time_ms/TEMP/HUM
 
     Input pin 14 wird benutzt, um indoor oder outdoor zu setzen
     pin14 low:    outdoor
@@ -131,8 +131,8 @@ float     temp;                   //Stores temperature value
 bool      sensor_status;          // status sensor true/false
 long      previousMillis = 0;     // will store last tim
 long      interval = 500;        // interval  (milliseconds)
-unsigned long startTime;
-unsigned long elapsed;
+unsigned long start_time_ms;      
+unsigned long elapsed_time_ms;
 float     voltage_value_raw;      //Define variable to read ADC data
 float     voltage_value;          //Define variable to read ADC data
 
@@ -180,10 +180,10 @@ void setup() {
 
    String   msg;
    char     message[50];
-   char     elapsed_time[5];
+   char     elapsed_time_c[5];
    int      ret;
    
-   startTime = millis();   // Loop Begin Zeit
+   start_time_ms = millis();   // Loop Begin Zeit
 
 /*
   Use watchdog timers.
@@ -249,9 +249,8 @@ void setup() {
   WiFi.config( staticIP, gateway, subnet ,dns);  
   WiFi.begin( wifi_ssid, wifi_password ); 
   
-  elapsed = millis() - startTime;  // Zeit Messung <------------------------------
   Serial.print("bis nach wifi setup msec: "); // time since program started
-  Serial.println (elapsed);
+  Serial.println ( elapsed_time(start_time_ms) );
     
   // default settings for bme280 I2C
   sensor_status = bme.begin();  
@@ -269,9 +268,8 @@ void setup() {
    }
     // sens_stat wird später im MQTT payload verwendet
     
-   elapsed = millis() - startTime;  // Zeit Messung <------------------------------
    DEBUGPRINT1  ("bis setup done msec: "); // time since program started
-   DEBUGPRINTLN1 (elapsed);
+   DEBUGPRINTLN1 ( elapsed_time(start_time_ms));
    DEBUGPRINTLN1 ("\nSetup Done...");
 
 //---------------------------
@@ -283,18 +281,18 @@ void setup() {
   
    waitForWifi();           // connect to WiFi, kommt nicht zurück, falls NO connection
 
-   elapsed = millis() - startTime;  // Zeit Messung <------------------------------
+ 
    DEBUGPRINT1  ("bis wifi da msec: "); // time since program started
-   DEBUGPRINTLN1  (elapsed);
+   DEBUGPRINTLN1  ( elapsed_time(start_time_ms) );
    mqtt_connect();             // connect to MQTT broker
 
-    elapsed = millis() - startTime;  // Zeit Messung <------------------------------
     DEBUGPRINT1  ("bis mqtt connect msec: "); // time since program started
-    DEBUGPRINTLN1 (elapsed);
+    DEBUGPRINTLN1 ( elapsed_time(start_time_ms));
 
+    elapsed_time_ms =  elapsed_time(start_time_ms);
     msg = "";
-    elapsed = (int)elapsed;
-    sprintf(elapsed_time, "%5d", elapsed);
+    int elapsed_time_int = (int)elapsed_time_ms;
+    sprintf(elapsed_time_c, "%5d", elapsed_time_int);
     
     if (inout_door == HIGH) {
       msg = msg + "indoor/";
@@ -304,7 +302,7 @@ void setup() {
     }
     msg = msg + batt_status;
     msg = msg + "/" + sens_status;
-    msg = msg + "/" + elapsed_time;
+    msg = msg + "/" + elapsed_time_c;
     msg = msg + "/";
     msg = msg + temp;
     msg = msg + "/";
@@ -447,21 +445,20 @@ void deepsleep() {
 
 //--- Watchdog Interrupt Routine ---------------------------------------------
 void watchdog_sketch() {
-//  const int elapsed = millis() - startTime;
-  elapsed = millis() - startTime;
   
   DEBUGPRINT1  ("\nwatchdog_sketch, arbeit fertig in: ");
-  DEBUGPRINT1  (elapsed);
+  DEBUGPRINT1  ( elapsed_time(start_time_ms) );
   DEBUGPRINTLN1 (" ms");
-  
+
+  elapsed_time_ms = elapsed_time(start_time_ms);
   // Wenn Watchdog bellt, weill Operation zu lange dauerte
   // Clear Wifi state.
   yield();
-  if (elapsed <= TICKER_TIME_MS) {
-      DEBUGPRINTLN1 ("elapsed time ist KLEINER als Tickertime");
+  if (elapsed_time_ms <= TICKER_TIME_MS) {
+      DEBUGPRINTLN1 ("elapsed_time_ms time ist KLEINER als Tickertime");
     }
   else {
-      DEBUGPRINTLN1 ("elapsed time ist GROESSER als Tickertime !");
+      DEBUGPRINTLN1 ("elapsed_time_ms time ist GROESSER als Tickertime !");
       delay(1);
 //    ESP.restart();
       DEBUGPRINT1 ("WiFi Connection status: ");
@@ -660,6 +657,12 @@ void mqtt_connect() {
     }//end mqtt_connect()
 //------------------------------------------------
 
-
+/*
+ *  Returns the number of milliseconds elapsed_time_ms since  start_time_ms.
+ */  
+unsigned long elapsed_time (unsigned long start_time)
+{
+  return millis() - start_time;
+}
 
 //---------------------------------------------
