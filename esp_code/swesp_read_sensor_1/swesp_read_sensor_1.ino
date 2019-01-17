@@ -42,13 +42,33 @@
  *************************************************************************************/
 
 // defines für verschiedene Programm-Varianten
+//
+//*************************************************
+//#define TEST     // uncomment für Testumgebung
+//*************************************************
+//
+//
+#if defined TEST
+#define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
+// Time to deepsleep (in seconds):
+const int sleepTimeS = 30;        // 30 ist etwa 30 Sec 
+#else
+#define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
+// Time to deepsleep (in seconds):
+const int sleepTimeS = 2000;        // 2000 ist etwa 33 Minuten
+#endif
+
 
 // zum inkludieren der richtigen Lib (ESP32 oder ESP8266)
 // select ESP8266 or ESP32 mittels define
 #define ESP8266
 // #define LAST_WILL      // auskommentieren macht keinen MQTT LastWill
 #define MQTT_AUTH         // auskommentieren wenn MQTT connect ohne userid/password 
-#define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
+
+#if defined LAST_WILL      // beide geht nicht !
+#undef MQTT_AUTH
+#endif
+
 #define HOSTNAME "mysensor"
 #define STAIIC_IP
 // ------------------------------------------------------
@@ -93,16 +113,12 @@ PubSubClient client(espClient);
 ADC_MODE(ADC_VCC);          // nötig bei VCC Messung
 
 
-// Time to deepsleep (in seconds):
-//const int sleepTimeS = 30;        // 40 ist etwa 30 Sec 
-//const int sleepTimeS = 240;       // 240 ist etwa 4 Minuten
-const int sleepTimeS = 2000;        // 240 ist etwa 33 Minuten
-
 // werte kommen aus sw_credentials.h
-const char* wifi_ssid =       WAN_SSID;
+const char* wifi_ssid =       WAN_SSID ;
 const char* wifi_password =   WAN_PW;
 const char* user_id_mqtt =    MQTT_USER;
 const char* password_mqtt =   MQTT_PW;
+
 
 
 // IP Adresse des MQTT Brokers
@@ -127,8 +143,8 @@ long      lastMsg = 0;
 char      msg[50];
 int       value = 0;
 String    batt_status;
-char*     topic = "switcher2/wetter/data";
-char*     topic_lw = "switcher2/wetter/lw";
+char*     topic =     "switcher2/wetter/data";
+char*     topic_lw =  "switcher2/wetter/lw";
 int       inout_door ;       // HIGH: indoor, LOW: outdoor
 String    last_will_msg = "Verbindung verloren zu Sensor: ";
 String    the_sketchname;
@@ -149,23 +165,24 @@ struct {
 uint32_t calculateCRC32(const uint8_t *data, size_t length);  // CRC function used to ensure data validity
 void printMemory();                 // helper function to dump rtc memory contents as hex
 void display_Running_Sketch ();     // anzeige der sketch info
-void sleepyTime();                  // Watchdog IR Routine
+void display_Esp_Info();            // Anzeige der ESP Info
+void watchdog_sketch();             // Watchdog IR Routine
 String batt_voltage () ;            // Messung Batt Voltage
 void readSensor ();                 // read sensor
 void waitForWifi();                 // wait for Wifi
 void setup_wifi();                  // setup wifi
-void mqtt_connect();                   // connevt mqtt
+void mqtt_connect();                // connevt mqtt
 
 
 //-------- Functions ----------------------------------------
 // -------------------------------------
 void setup() {
 
-  
-   String msg;
-   char message[50];
-   char elapsed_time[5];
-   int ret;
+   String   msg;
+   char     message[50];
+   char     elapsed_time[5];
+   int      ret;
+   
    startTime = millis();   // Loop Begin Zeit
 
 /*
@@ -175,18 +192,38 @@ void setup() {
   radio on trying to associte if your AP is down, for example. 
   The ESP8266 has a built-in Ticker that takes a timeout and a callback.
 */
-  sleepTicker.once_ms (TICKER_TIME_MS, &sleepyTime);
+  sleepTicker.once_ms (TICKER_TIME_MS, &watchdog_sketch);
 
   Serial.begin(115200);
   while (!Serial) { }
   DEBUGPRINTLN0 ("Starting Setup --------"); 
   display_Running_Sketch();
-  DEBUGPRINT1 ("sleeptime: ");
-  DEBUGPRINTLN1 (sleepTimeS);
 
-  pinMode(indoor_outdoor_pin, INPUT_PULLUP);   // defines indoor-outdoor
-  pinMode(adc_switch_pin, OUTPUT);      // Spannungsteiler ein/aus     
-  digitalWrite(adc_switch_pin, LOW);    // Spannungsteiler aus
+#if defined TEST
+  DEBUGPRINTLN1 ("TEST ist gesetzt <------------");
+#endif    
+
+  DEBUGPRINT1 ("deepsleep time: ");
+  DEBUGPRINTLN1 (sleepTimeS);
+  display_Esp_Info();
+
+  msg = ESP.getResetReason().c_str();
+  //DEBUGPRINTLN1 (msg);
+
+  if(msg.indexOf("Watchdog") >= 0) {
+      DEBUGPRINTLN1     ("War Watchdog Reset, also mache deepsleep");
+      deepsleep();
+  }
+  
+  if (ESP.getResetReason().equals("External System"))  {
+    DEBUGPRINTLN1     ("Reset");
+  }
+
+  DEBUGPRINT1 ("\n");
+  
+  pinMode       (indoor_outdoor_pin, INPUT_PULLUP);   // defines indoor-outdoor
+  pinMode       (adc_switch_pin, OUTPUT);      // Spannungsteiler ein/aus     
+  digitalWrite  (adc_switch_pin, LOW);    // Spannungsteiler aus
   
   inout_door = digitalRead  (indoor_outdoor_pin);
   if (inout_door == HIGH) {
@@ -199,7 +236,7 @@ void setup() {
   }
 
 
-  DEBUGPRINTLN1 ("\nMache WiFi Begin --------");
+  DEBUGPRINTLN1 ("Mache WiFi Begin --------");
   // We start by connecting to a WiFi network
   DEBUGPRINT1 ("Connecting to: ");
   DEBUGPRINTLN1 (wifi_ssid);
@@ -233,7 +270,7 @@ void setup() {
     // sens_stat wird später im MQTT payload verwendet
     
    elapsed = millis() - startTime;  // Zeit Messung <------------------------------
-   DEBUGPRINT1  ("Until setup done msec: "); // time since program started
+   DEBUGPRINT1  ("bis setup done msec: "); // time since program started
    DEBUGPRINTLN1 (elapsed);
    DEBUGPRINTLN1 ("\nSetup Done...");
 
@@ -243,18 +280,19 @@ void setup() {
    readSensor ();
    batt_status = batt_voltage ();
    delay(10);
-    
-   waitForWifi();           // connect to WiFi
+  
+   waitForWifi();           // connect to WiFi, kommt nicht zurück, falls NO connection
 
    elapsed = millis() - startTime;  // Zeit Messung <------------------------------
-   DEBUGPRINT1  ("Until wifi da msec: "); // time since program started
+   DEBUGPRINT1  ("bis wifi da msec: "); // time since program started
    DEBUGPRINTLN1  (elapsed);
    mqtt_connect();             // connect to MQTT broker
 
     elapsed = millis() - startTime;  // Zeit Messung <------------------------------
-    DEBUGPRINT1  ("Until mqtt connect msec: "); // time since program started
+    DEBUGPRINT1  ("bis mqtt connect msec: "); // time since program started
     DEBUGPRINTLN1 (elapsed);
-    
+
+    msg = "";
     elapsed = (int)elapsed;
     sprintf(elapsed_time, "%5d", elapsed);
     
@@ -272,7 +310,9 @@ void setup() {
     msg = msg + "/";
     msg = msg + hum;
   msg.toCharArray(message,50);
-  
+
+  //   while (1) {};            // test, aktiviert den Software Watchdog (nach ca. 3.2 sek)
+     
  //   publish sensor data to MQTT broker
 
     if (!mqtt_status)  {
@@ -300,7 +340,7 @@ void setup() {
 
     }
     
-   sleepyTime();
+   watchdog_sketch();
  
 }
 
@@ -309,6 +349,7 @@ void setup() {
 void loop() {
  
 }
+
 
 //------------------------------------------------
 uint32_t calculateCRC32(const uint8_t *data, size_t length) {
@@ -371,10 +412,30 @@ void display_Running_Sketch (void){
   DEBUGPRINT1 ("\n");
 }
 
+// ------------------------------------
+void display_Esp_Info() {
+
+  DEBUGPRINTLN1 ("\nESP Info------");
+  DEBUGPRINT1 ("Sdk version: ");
+  DEBUGPRINTLN1 (ESP.getSdkVersion());  
+  DEBUGPRINT1 ("Core Version: ");
+  DEBUGPRINTLN1 (ESP.getCoreVersion().c_str());
+  DEBUGPRINT1 ("Boot Version: "); 
+  DEBUGPRINTLN1 (ESP.getBootVersion());
+  DEBUGPRINT1 ("Boot Mode: "); 
+  DEBUGPRINTLN1 (ESP.getBootMode());
+  DEBUGPRINT1 ("CPU Frequency MHz: "); 
+  DEBUGPRINTLN1 (ESP.getCpuFreqMHz());
+  DEBUGPRINT1 ("Reset reason: "); 
+  DEBUGPRINTLN1 (ESP.getResetReason().c_str()); 
+}
 //-------------------------------------
 void deepsleep() {
-  
-  DEBUGPRINTLN1 ("Going into deep sleep...");
+ 
+  DEBUGPRINT1 ("Going into deep sleep for ");
+  DEBUGPRINT1 (String(sleepTimeS));
+  DEBUGPRINTLN1 (" seconds");
+   
   ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
   // It can take a while for the ESP to actually go to sleep.
   // When it wakes up we start again in setup().
@@ -382,29 +443,29 @@ void deepsleep() {
 // wird nie ausgeführt...
   DEBUGPRINTLN1 ("Nach deep sleep...");
   yield();
-
-  
 }
+
 //--- Watchdog Interrupt Routine ---------------------------------------------
-void sleepyTime() {
+void watchdog_sketch() {
 //  const int elapsed = millis() - startTime;
   elapsed = millis() - startTime;
   
-  DEBUGPRINT1  ("\nsleepyTime, arbeit fertig in: ");
+  DEBUGPRINT1  ("\nwatchdog_sketch, arbeit fertig in: ");
   DEBUGPRINT1  (elapsed);
-  DEBUGPRINTLN1 (" ms\n");
+  DEBUGPRINTLN1 (" ms");
   
   // Wenn Watchdog bellt, weill Operation zu lange dauerte
   // Clear Wifi state.
   yield();
   if (elapsed <= TICKER_TIME_MS) {
-      DEBUGPRINTLN1 ("elapsed time kleiner Tickertime");
+      DEBUGPRINTLN1 ("elapsed time ist KLEINER als Tickertime");
     }
   else {
-      DEBUGPRINTLN1 ("Ticker interrupt");
+      DEBUGPRINTLN1 ("elapsed time ist GROESSER als Tickertime !");
       delay(1);
 //    ESP.restart();
-  
+      DEBUGPRINT1 ("WiFi Connection status: ");
+      DEBUGPRINTLN1  (WiFi.status());
     if (WiFi.status() == WL_CONNECTED) {
       DEBUGPRINTLN1 ("WiFi disconnect..");
       WiFi.disconnect( true );
@@ -499,59 +560,45 @@ void readSensor () {
 
 }
 
+//------------------------------------
+void wifi_details()
+{
+   DEBUGPRINTLN1    ("");
+   DEBUGPRINT1    ("WiFi connected to SSID: ");
+   DEBUGPRINTLN1    (WiFi.SSID());
+   DEBUGPRINT1    ("IP address: ");
+   DEBUGPRINTLN1    (WiFi.localIP());
+   DEBUGPRINTLN1    ("\nWiFi Details:");
+   WiFi.printDiag(Serial);
+}
+
 //------------------------------------------------
 void waitForWifi() {
   DEBUGPRINT1 ("\n");
-  DEBUGPRINTLN1 ("Wait for WiFi.");
+  DEBUGPRINT1 ("Waiting for WiFi.");
 
-int retries = 0;
-int wifi_status = WiFi.status();
+int retries;
 
   delay (300);        // inital delay, weniger als 300 dauert es sowieso nicht...
-
-  while( wifi_status != WL_CONNECTED ) {
-  retries++;
-   
-    if  ( retries == 150 ) {
-    // Maybe Quick connect is not working, reset WiFi and try regular connection
-      DEBUGPRINTLN1 ("Nach 150 Versuchen");
-      DEBUGPRINT1 ("WiFi Status");
-      DEBUGPRINTLN1 (wifi_status);
-      WiFi.disconnect();
-      delay( 10 );
-      WiFi.forceSleepBegin();
-      delay( 10 );
-      WiFi.forceSleepWake();
-      delay( 10 );
-      WiFi.config( staticIP, gateway, subnet ,dns);  
-      WiFi.begin( wifi_ssid, wifi_password );
-      yield();
-    }
-    if  ( retries == 250 ) {
-    // Giving up after 30 seconds and going back to sleep
-      DEBUGPRINTLN1 ("Nach 250 Versuchen");
-      WiFi.disconnect( true );
-      delay( 1 );
-      WiFi.mode( WIFI_OFF );
-      yield();
-      deepsleep();
-    }
-                    // warten bis zum nächsten check
-  delay(20);        // kleine granularität für schnelleres recovery
-  yield();
-  wifi_status = WiFi.status();    // check again
+ 
+   retries = 0;
+   while (WiFi.status() != WL_CONNECTED)  { 
+    retries++;
+    if (retries > 30) break;      // max number retries
+    delay(100);  
+    DEBUGPRINT1  ("."); 
+   }
+    
+  if (WiFi.status() == WL_CONNECTED) {
+    wifi_details();
+    return;
   }
 
-// we are connected ...
-  DEBUGPRINT1  ("Connected to:");
-  DEBUGPRINTLN1 ( wifi_ssid);
-  DEBUGPRINT1  ("IP address: ");
-  DEBUGPRINTLN1  (WiFi.localIP());
-  DEBUGPRINT1  ("Anz retries: ");
-  DEBUGPRINTLN1  (retries);
-  DEBUGPRINTLN1  ("\nWiFi Details:");
-  WiFi.printDiag(Serial);
-
+  
+  // no connection...
+  DEBUGPRINTLN1  ("\nno wifi connection");
+  // gehe mal schlafen, ev. ist es dann besser....
+  deepsleep();
 }
 
 
@@ -575,30 +622,42 @@ void mqtt_connect() {
 
 #if defined LAST_WILL
 // connect mit Angabe eines last will
+    DEBUGPRINTLN1 ("MQTT MIT userid/pw und lastwill message");
    if (client.connect(clientId.c_str(), user_id_mqtt,password_mqtt, topic_lw ,0 , false,last_will))
+    {
 #else
  // connect OHNE Angabe eines last will
-     if (client.connect(clientId.c_str(), user_id_mqtt,password_mqtt ))
+#if defined MQTT_AUTH 
+    DEBUGPRINTLN1 ("MQTT MIT userid/pw");
+    if (client.connect(clientId.c_str(), user_id_mqtt,password_mqtt ))
+    {
+#else
+    DEBUGPRINTLN1 ("MQTT OHNE userid/pw");
+   if (client.connect(clientId.c_str() ))
+    {
+#endif
 
 #endif
-    if (client.connected()) {
       DEBUGPRINTLN1  ("MQTT connected");
       mqtt_status = true;
       break;
        }
-    
-     DEBUGPRINT1 ("MQTT connect failed, rc=");
-     DEBUGPRINT1 (client.state());
-     DEBUGPRINTLN1 (" try again in 1 second");
+    else 
+    {
+      DEBUGPRINT1 ("MQTT connect failed, rc=");
+      DEBUGPRINT1 (client.state());
+      DEBUGPRINTLN1 (" try again in 1 second");
+ 
     // Wait  1 seconds before retrying
-     currentMillis = millis();
-    if(currentMillis - previousMillis > interval * 2) {
-    // save the last time 
-      delay(1);
-      previousMillis = currentMillis;   
+      currentMillis = millis();
+      if(currentMillis - previousMillis > interval * 2) {
+        delay(1);
+        previousMillis = currentMillis;   
       }
-  }
-} //end mqtt_connect()
+    }
+}
+
+    }//end mqtt_connect()
 //------------------------------------------------
 
 
