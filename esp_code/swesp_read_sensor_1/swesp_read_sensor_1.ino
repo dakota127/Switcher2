@@ -29,7 +29,8 @@
     und auch vor allem von hier:
     https://blog.voneicken.com/2018/lp-wifi-esp8266-1/
 
-    
+    Mit Dank auch an Michel Deslierres
+    https://www.sigmdel.ca/michel/program/esp8266/arduino/watchdogs_en.html
     
     Battery Level:
     Entweder wird direkt VCC gemessen (wenn ein LiFePo4 direkt angeschlossen ist) 
@@ -44,7 +45,7 @@
 // defines für verschiedene Programm-Varianten
 //
 //*************************************************
-//#define TEST     // uncomment für Testumgebung
+#define TEST     // uncomment für Testumgebung
 //*************************************************
 //
 //
@@ -71,6 +72,11 @@ const int sleepTimeS = 2000;        // 2000 ist etwa 33 Minuten
 
 #define HOSTNAME "mysensor"
 #define STAIIC_IP
+
+extern "C" {
+#include "user_interface.h"
+}
+
 // ------------------------------------------------------
 #define TICKER_TIME_MS     10000  // Zeit für Watchdog Interrrupt
 
@@ -88,7 +94,7 @@ const int sleepTimeS = 2000;        // 2000 ist etwa 33 Minuten
 #if defined ESP8266
   #include <ESP8266WiFi.h>
   const int indoor_outdoor_pin = 14;      // um indoor/outdoor festzustellen
-  const int adc_switch_pin = 2;           // 1: spannungsteiler ein, 0: aus
+  const int adc_sensor_pin = 12;          // 1: sensor/spannungsteiler ein, 0: aus
 #else
   #include <WiFi.h>
   const int indoor_outdoor_pin = 14;     // um indoor/outdoor festzustellen  
@@ -182,6 +188,7 @@ void setup() {
    char     message[50];
    char     elapsed_time_c[5];
    int      ret;
+   bool     software_wachtdog = false;
    
    start_time_ms = millis();   // Loop Begin Zeit
 
@@ -194,6 +201,53 @@ void setup() {
 */
   sleepTicker.once_ms (TICKER_TIME_MS, &watchdog_sketch);
 
+// folgender Code thanks to Michel Deslierres
+// https://www.sigmdel.ca/michel/program/esp8266/arduino/watchdogs_en.html
+
+ switch (ESP.getResetInfoPtr()->reason) {
+    
+    case REASON_DEFAULT_RST: 
+      // do something at normal startup by power on
+      strcpy_P(message, PSTR("Power on"));
+      break;
+      
+    case REASON_WDT_RST:
+      // do something at hardware watch dog reset
+      strcpy_P(message, PSTR("Hardware Watchdog"));     
+      break;
+      
+    case REASON_EXCEPTION_RST:
+      // do something at exception reset
+      strcpy_P(message, PSTR("Exception"));      
+      break;
+      
+    case REASON_SOFT_WDT_RST:
+      // do something at software watch dog reset
+      strcpy_P(message, PSTR("Software Watchdog"));
+      software_wachtdog = true;
+      break;
+      
+    case REASON_SOFT_RESTART: 
+      // do something at software restart ,system_restart 
+      strcpy_P(message, PSTR("Software/System restart"));
+      break;
+      
+    case REASON_DEEP_SLEEP_AWAKE:
+      // do something at wake up from deep-sleep
+      strcpy_P(message, PSTR("Deep-Sleep Wake"));
+      break;
+      
+    case REASON_EXT_SYS_RST:
+      // do something at external system reset (assertion of reset pin)
+      strcpy_P(message, PSTR("External System"));
+      break;
+      
+    default:  
+      // do something when reset occured for unknown reason
+      strcpy_P(message, PSTR("Unknown"));     
+      break;
+  }
+  
   Serial.begin(115200);
   while (!Serial) { }
   DEBUGPRINTLN0 ("Starting Setup --------"); 
@@ -207,23 +261,15 @@ void setup() {
   DEBUGPRINTLN1 (sleepTimeS);
   display_Esp_Info();
 
-  msg = ESP.getResetReason().c_str();
-  //DEBUGPRINTLN1 (msg);
-
-  if(msg.indexOf("Watchdog") >= 0) {
-      DEBUGPRINTLN1     ("War Watchdog Reset, also mache deepsleep");
+  if (software_wachtdog)  {
+      DEBUGPRINTLN1     ("War Software Watchdog Reset, also mache deepsleep");
       deepsleep();
   }
   
-  if (ESP.getResetReason().equals("External System"))  {
-    DEBUGPRINTLN1     ("Reset");
-  }
-
-  DEBUGPRINT1 ("\n");
   
   pinMode       (indoor_outdoor_pin, INPUT_PULLUP);   // defines indoor-outdoor
-  pinMode       (adc_switch_pin, OUTPUT);      // Spannungsteiler ein/aus     
-  digitalWrite  (adc_switch_pin, LOW);    // Spannungsteiler aus
+  pinMode       (adc_sensor_pin, OUTPUT);       // Spannungsteiler/Sensor ein/aus     
+  digitalWrite  (adc_sensor_pin, HIGH);          // Spannungsteiler/Sensor einschalten
   
   inout_door = digitalRead  (indoor_outdoor_pin);
   if (inout_door == HIGH) {
@@ -234,7 +280,7 @@ void setup() {
      DEBUGPRINTLN1 ("Bin Outdoor");
      last_will_msg = last_will_msg + "outdoor";
   }
-
+   DEBUGPRINTLN1 ("Sensor/ADC einschalten");
 
   DEBUGPRINTLN1 ("Mache WiFi Begin --------");
   // We start by connecting to a WiFi network
@@ -429,11 +475,14 @@ void display_Esp_Info() {
 }
 //-------------------------------------
 void deepsleep() {
- 
+
+  DEBUGPRINTLN1 ("Sensor/ADC ausschalten");
+  digitalWrite  (adc_sensor_pin, LOW);          // Spannungsteiler/Sensor ausschalten 
   DEBUGPRINT1 ("Going into deep sleep for ");
   DEBUGPRINT1 (String(sleepTimeS));
   DEBUGPRINTLN1 (" seconds");
-   
+
+ 
   ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
   // It can take a while for the ESP to actually go to sleep.
   // When it wakes up we start again in setup().
@@ -490,8 +539,7 @@ void watchdog_sketch() {
 String batt_voltage () {
   
   String bat_str;
-//  digitalWrite  (adc_switch_pin, HIGH);    // Spannungsteiler einschalten
-  delay (100);
+  delay (10);
 
   voltage_value_raw = ESP.getVcc();
   voltage_value = (voltage_value_raw / 1024.0) * VCC_ADJ ;
@@ -505,8 +553,6 @@ String batt_voltage () {
   delay(1);                             //
 
   dtostrf(voltage_value, 4, 2, battery_string);
-  
-//  digitalWrite(adc_switch_pin, LOW);    // Spannungsteiler ausschalten
     
   battery_string[4] = '\0';
   bat_str= String(battery_string);
@@ -540,7 +586,13 @@ void readSensor () {
       hum  = 11.1;
       return;
     }
-    
+
+ // -------  aktiviere dies um den Software Watchdog des ESP8266 zu aktivieren ---------  
+ //   simuliert fehler im sketch, endloser loop
+ //   wird nach ca. 3 sec vom Software Watchdog des ESP unterbrochen, es erfolgt ein reset
+ //   while (1) {};
+ // -------------------------------------------------------------------------------------
+     
     DEBUGPRINT1 ("\n");
     DEBUGPRINTLN1 ("Messung: ");
     temp = bme.readTemperature();
