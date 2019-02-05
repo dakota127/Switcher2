@@ -319,12 +319,13 @@ class Dose(MyPrint):
             if payload_in == "ON" :
                 self.status_extern = 1          # dose wurde eingeschaltet
                 self.schaltmodus = 1            # sie ist manuell eingeschaltet
-                self.myprint (DEBUG_LEVEL2,  "--> dose {} aktor_callback() setze dose ein/maunell ")
+                self.myprint (DEBUG_LEVEL2,  "--> dose {} aktor_callback() setze dose ein/maunell ".format (self.dosen_nummer))
             if payload_in == "OFF" :
-                self.myprint (DEBUG_LEVEL2,  "--> dose {} aktor_callback() setze dose aus/maunell ")
+                self.myprint (DEBUG_LEVEL2,  "--> dose {} aktor_callback() setze dose aus/maunell ".format (self.dosen_nummer))
                 self.status_extern = 0          # dose wurde ausgeschaltet
                 self.schaltmodus = 1            # schaltmodus nun manuell
-           
+        else:
+             self.myprint (DEBUG_LEVEL1,  "--> dose {} aktor_callback() zeitdiff kleiner als: {} sek, mache nichts".format(self.dosen_nummer,WAIT_STATUS_MELDUNG))
  
 
 # ---- Funktion set Zimmer ------------------------------
