@@ -317,11 +317,13 @@ class Dose(MyPrint):
         if delta > WAIT_STATUS_MELDUNG:
         
             if payload_in == "ON" :
-                self.status_extern = 1 
-                self.schaltmodus = 1
+                self.status_extern = 1          # dose wurde eingeschaltet
+                self.schaltmodus = 1            # sie ist manuell eingeschaltet
+                self.myprint (DEBUG_LEVEL2,  "--> dose {} aktor_callback() setze dose ein/maunell ")
             if payload_in == "OFF" :
-                self.status_extern = 0 
-                self.schaltmodus = 1
+                self.myprint (DEBUG_LEVEL2,  "--> dose {} aktor_callback() setze dose aus/maunell ")
+                self.status_extern = 0          # dose wurde ausgeschaltet
+                self.schaltmodus = 1            # schaltmodus nun manuell
            
  
 
