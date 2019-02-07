@@ -335,7 +335,7 @@ class Dose(MyPrint):
                 self.status_extern = 0          # dose wurde ausgeschaltet
                 self.schaltmodus = 1            # schaltmodus nun manuell
         else:
-             self.myprint (DEBUG_LEVEL1,  "--> dose {} aktor_callback() zeitdiff kleiner als: {} sek, mache nichts".format(self.dosen_nummer,WAIT_STATUS_MELDUNG))
+             self.myprint (DEBUG_LEVEL0,  "--> dose {} aktor_callback() Meldung von Dose gekommen, Zeitdiff kleiner als: {} sek, mache nichts".format(self.dosen_nummer,WAIT_STATUS_MELDUNG))
  
 
 # ---- Funktion set Zimmer ------------------------------
