@@ -100,6 +100,7 @@ class Dose(MyPrint):
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , dose hat modus_1 = 2".format(self.dosen_nummer))
 
             
+            
          # schaltart auswerten....   
         if len(self.schalt) == 0:
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , Schaltart ungültig, nehme default 1".format(self.dosen_nummer))
@@ -113,6 +114,7 @@ class Dose(MyPrint):
             self.msg_variante = int(self.e[1])
         if len(self.e) > 2: 
             self.subscribe = int(self.e[2])
+            
             
         if  self.schaltart == 3:
             self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {}, MQTT_status: {}, msg_var:{}, subscribe:{}".format(self.dosen_nummer,self.schaltart, self.mqtt_status, self.msg_variante, self.subscribe))
@@ -128,7 +130,15 @@ class Dose(MyPrint):
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , nehme Schaltart 1 da MQTT nicht definiert oder fehlerhaft ist !".format(self.dosen_nummer))
             self.schaltart = 1
                 
+# plausicheck 
+        if  self.dosen_nummer > 4 :
+            if self.schaltart == 1 or self.schaltart == 3:     # dosennummer 5 und ev. 6 dürfen nicht schaltart 2 haben (Funksteckdosen)
+                pass
+            else:  
+                self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , darf nur Schaltart 3 oder 1 haben, nehme 1".format(self.dosen_nummer))
+                self.schaltart = 1;
 
+            
         if self.schaltart == 1:
             import sub.swaktor_1 
             self.myaktor=sub.swaktor_1.Aktor_1(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
@@ -360,6 +370,7 @@ class Dose(MyPrint):
             ret = ret+"i"                       # überschreibt alle anderen werte
         pass
         ret = ret + ":" + str(self.schaltart)     # die schaltart noch dazu
+        self.myprint (DEBUG_LEVEL2,  "--> dose {} show_status returns: {}".format (self.dosen_nummer, ret))        
         return(ret)
 
 

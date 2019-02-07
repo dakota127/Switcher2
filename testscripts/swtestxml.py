@@ -16,7 +16,7 @@ import xml.dom.minidom
 import sys, os
 import argparse
 
-maxdosen = 6
+maxdosen = 7
 tageliste = [ [] for z in range (maxdosen)]
 list_dosenname = []
 listdosennummern = []
@@ -246,7 +246,7 @@ def runit(filename):
             print ("Dosencounter: {} und Dosennummer: {}".format(dosencounter,dosennummer))
 
         if debug:
-            print ("Tage fuer die Dose")
+            print ("Behandle Tage fuer die Dose")
         tage = dose.getElementsByTagName("tag")
         for tag in tage:
             if tag.hasAttribute("nummer"):
@@ -256,7 +256,7 @@ def runit(filename):
                 tageliste[dosennummer].append(tagin)
     
             if debug: 
-                print ("Sequenzen fuer den Tag")
+                print ("Behandle Sequenzen fuer den Tag")
             sequ = tag.getElementsByTagName("sequence")	
             anzseq = len(sequ)
             anzseqtot += anzseq
@@ -281,8 +281,8 @@ def runit(filename):
 # Test0: Anzahl der gefundenen Dosen
 
 
-    if len(listdosennummern) != 4:
-        print ("Statt 4 Dosen sind nur {} Dosen definiert".format(anzdosen))
+    if len(listdosennummern) != 5:
+        print ("Statt 5 Dosen sind nur {} Dosen definiert".format(anzdosen))
         error.append(4)
     total = 0
     total2 = 0
@@ -305,11 +305,12 @@ def runit(filename):
     for i in range (maxdosen - dosencounter-1):
         pass
         tageliste.pop(0)    
-    if debug:
-        print ("Tageliste: {}".format(tageliste))
+ 
+
     
-    
-    for i in range (dosencounter):  
+    for i in range (dosencounter): 
+        if debug: 
+            print ("Tageliste: {}".format(tageliste[i]))
 
         anzt = len(tageliste[i])
         if anzt > 7 or anzt < 7 :

@@ -5,7 +5,7 @@
 
 <!--
     Control Datei für die Funkdosen-Steuerung, by Peter K. Boxler, August 2014
-     Pro Steckdose (max 4) sind für jeden Wochentag (0=Sonntag bis 6=Samstag)
+     Pro Steckdose (max 5) sind für jeden Wochentag (0=Sonntag bis 6=Samstag)
      beliebige Sequenzen definierbar. Eine Sequenz besteht je aus Einschalten/Ausschalten
      zu bestimmten Zeitpunkten (HHMM)
      
@@ -14,7 +14,7 @@
     Mit 4 Dosen für Sommer bei Peter  TESTVERSION
 -->
 <aktionen saison = "Sommersaison">
-<file_id>Sommer Test2 4D Prisca</file_id>
+<file_id>Sommer Test2 5D Prisca</file_id>
 <from_date>01.April</from_date>
 <to_date>18.September</to_date>
 
@@ -388,6 +388,92 @@ Dose Nummer 4  Badezimmer******************************* Dose 4
   	<OFF>11.30</OFF>
 </sequence>
   </tag>
+
+
+</dose>
+<!--
+Dose Nummer 5  Werkstatt ******************************* Dose 5
+-->
+
+<dose name = "Werkstatt">
+<dose_nr> 5 </dose_nr>
+
+<tag nummer = "0">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
+
+<tag nummer = "1">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
+
+<tag nummer = "2">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
+
+<tag nummer = "3">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
+
+<tag nummer = "4">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
+
+<tag nummer = "5">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
+
+<tag nummer = "6">
+  <sequence>
+  	<ON>08.30</ON>
+  	<OFF>08.58</OFF>
+  </sequence> 
+  <sequence>
+  	<ON>12.45</ON>
+  	<OFF>13.40</OFF>
+  </sequence>
+</tag>
 
 
 </dose>
