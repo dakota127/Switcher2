@@ -52,10 +52,11 @@ class Aktor_1 (MyPrint):
         
         self.action_type="4 LED"     # welche art Schalten ist dies hier
         
-        self.myprint (DEBUG_LEVEL2, "--> aktor_1 {} aktor_init called für Dose {}".format (self.nummer,self.dosennummer))
+        self.myprint (DEBUG_LEVEL2, "--> aktor_1 aktor_init called für Dose {}".format (self.dosennummer))
         Aktor_1.aktorzahler +=1            # erhögen aktorzähler
 
  # nun alle GPIO Pins aus dem Config File holen
+ # es müssen 5 Pins definiert werden, da maximal 5 Dosen vorkommen können
         
         config=ConfigRead(self.debug)        # instanz der ConfigRead Class
         ret=config.config_read(self.path + "/swconfig.ini","aktor_1",cfglist_akt)
@@ -78,11 +79,13 @@ class Aktor_1 (MyPrint):
 #   GPIO Pin 4 holen
         y=cfglist_akt.index("gpio_4")  + 1    # suche den Wert im Config-file
         self.Pins2.append (int(cfglist_akt[y]))
-
-# nun wurde alle 4 Pins geholt, diese Instanz verwendet genau einen der Pins ind er Liste Pins2
+#   GPIO Pin 5 holen
+        y=cfglist_akt.index("gpio_5")  + 1    # suche den Wert im Config-file
+        self.Pins2.append (int(cfglist_akt[y]))
+# nun wurde alle 5 Pins geholt, diese Instanz verwendet genau einen der Pins in der Liste Pins2
         self.mypin=self.Pins2[self.nummer]        # hole Pin NUmmer 
         GPIO.setup(self.mypin, GPIO.OUT)
-        GPIO.output(self.mypin, True)
+ #       GPIO.output(self.mypin, True)
         self.myprint (DEBUG_LEVEL1, "--> aktor_1 {} aktor_init : dose {}, using GPIO:{}".format (self.nummer,self.dosennummer, self.mypin))
    
         self.errorcode=0    # init aktor ok
