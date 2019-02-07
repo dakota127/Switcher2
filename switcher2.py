@@ -656,13 +656,13 @@ def test_dosen():
         return
      
     mypri.myprint (DEBUG_LEVEL1,  "switcher2 testmode=Ja in Configfile=1, also mache Test_dosen")
-          
+    sleep(1)
     for dose in dosen:          
         dose.set_auto(1)
         sleep(0.5)
         dose.set_auto(0)
-    mypri.myprint (DEBUG_LEVEL2,  "Test_dosen done")
-    sleep(0.7)
+    mypri.myprint (DEBUG_LEVEL1,  "Test_dosen done")
+    sleep(1)
 
 #  --- Funktion zum Erstellen Liste aller Tage für bestimmte Saison
 def alle_tage_pro_saison (liste, saison):
