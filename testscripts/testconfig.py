@@ -107,19 +107,41 @@ if __name__ == '__main__':
     mypri.myprint (DEBUG_LEVEL0,  "get_value bringt: {}".format (ret))	# für log und debug
   
    
-    mypri.myprint (DEBUG_LEVEL0,  "Nun actor config lesen")	# für log und debug
+    mypri.myprint (DEBUG_LEVEL0,  "Nun actor_1 config lesen")	# für log und debug
 
     ret=config.config_read("swconfig.ini","aktor_1",cfglist_akt)
     mypri.myprint (DEBUG_LEVEL0,  "config_read bringt: {}".format (ret))	# für log und debug
     if ret > 0:
         sys.exit(2)
+    
 # suche werte mit Methode, die sicher not found ab.
     ret=config.get_value(cfglist_akt,"gpio_1")
     mypri.myprint (DEBUG_LEVEL0,  "get_value bringt: {}".format (ret))	# für log und debug
 
-   
-   
+ # suche werte mit Methode, die sicher not found ab.
+    ret=config.get_value(cfglist_akt,"gpio_X")
+    mypri.myprint (DEBUG_LEVEL0,  "get_value bringt: {}".format (ret))	# für log und debug
 
+
+    mypri.myprint (DEBUG_LEVEL0,  "Nun actor_5 config lesen")	# für log und debug  
+    ret=config.config_read("swconfig.ini","aktor_5",cfglist_akt)
+    mypri.myprint (DEBUG_LEVEL0,  "config_read bringt: {}".format (ret))	# für log und debug
+    if ret > 0:
+        sys.exit(2)  
+
+# suche werte mit Methode, die sicher not found ab.
+    ret=config.get_value(cfglist_akt,"pfad_1")
+    mypri.myprint (DEBUG_LEVEL0,  "get_value bringt: {}".format (ret))	# für log und debug
+
+    mypri.myprint (DEBUG_LEVEL0,  "\nnun test mit lesen swdosen.ini file")
+    
+    anz = config.read_dosenconfig ()
+    mypri.myprint (DEBUG_LEVEL0,  "\ngemeldet wird anzahl dosen: {}". format(anz))     
+           
+    mypri.myprint (DEBUG_LEVEL0,  "\nnun test mit schreiben swdosen.ini file")
+    
+    config.write_value (int(4))
+    
    
 # fertig behandlung confifile
 

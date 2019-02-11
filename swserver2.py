@@ -39,7 +39,14 @@ DEBUG_LEVEL1=1
 DEBUG_LEVEL2=2
 DEBUG_LEVEL3=3
 
+# Info die vom switcher2 geliefert wird und welche für den Server wichtig ist
+anz_dosen_konfiguriert = 0
+wetter_konfiguriert = 0
+reserve1 = 0
+reserve2 = 0
 
+                
+                
 REQUEST_TIMEOUT=3500
 REQUEST_RETRIES=3
 debug=0
@@ -319,28 +326,56 @@ def get_status(status_art):
         del ipc_instance
 
         return(retco)     
-        
-    meldung=retcode[1][4:]      # wir nehmen die ersten 4 Char nicht
  
-    tmp_stri = meldung [0:10]   # die nächsten 10 bytes sind info für uns, den webserver
-                                # damit meldet uns der switcher, was zu tun ist,
-    info_fuer_webserver = [int(i) for i in str(tmp_stri)]
-    
-    meldung = meldung [10:]      # nehme ab pos 10 
-    mypri.myprint (DEBUG_LEVEL1, "Info fuer Webserver: {}".format(info_fuer_webserver))
-   
+    if debug > 0:
+        print ( "--> diese meldung gekommen: ")
+        print (retcode[1])  
+    meldung=retcode[1][4:]      # wir nehmen die ersten 4 Char nicht
+  
+    if debug > 0:
+        print ( "--> diese meldung gekommen nach strip command: ")
+        print (meldung)     
     try:
         meld=json.loads(meldung)   # JSON Object wird in Python List of List gewandelt
     except:
         mypri.myprint (DEBUG_LEVEL2, "Status string ist nicht gut...")
         retco.append(9)
         return(retco)
+
+    if debug > 0:
+        print ( "--> diese meldung als liste gekommen nach json.loads: ")
+        print (meld)     
         
-      
-  # keep this might need it again....    
- #   print ("Meldung sieht so aus")
- #   print (len(meld),meld)
+    # antwort besteht aus einer Liste mit Einträgen
+    # index[0] sind die Daten an den Webserver
+    # restliche einträge sind die DAten
     
+    if debug > 0:
+        print ( "Info fuer den Webserver: -------------")  
+        for i in range(len(meld[0])):
+            print ("{:18}:  {:<18}".format (meld[0][i][0]  ,meld[0][i][1]))
+    
+
+  # entnehmen der Daten, die für uns den webserver sind....      
+#    anz_dosen_konfiguriert =  meld[1][1]
+#    wetter_konfiguriert =     meld[2][1]
+#    reserve1 =  meld[3][1]
+#    reserve2 =  meld[3][1]
+#    mypri.myprint (DEBUG_LEVEL1, "swserver2: daten für mich, anzdosen: {}, wetter: {}, reserve1: {}, reserve2: {}". format(anz_dosen_konfiguriert, wetter_konfiguriert, reserve1, reserve2))
+    
+    meld.pop(0)             # liste mit info an den webserver wegpoppen
+    if debug > 0:      
+        print ("Und nun die Daten: ------------------- len(meld): {}". format (len(meld)))  
+    
+#  wetterdaten ist liste laenge 2
+        if len(meld) == 2 :   
+            for item1 in meld :    
+                for item2 in item1 :
+                    print ("{:18}:  {:<18}".format (item2[0]  ,item2[1]))
+        else:       # andere daten haben liste mit mehr als 2 items
+            for item1 in meld :    
+                print ("{:18}:  {:<18}".format (item1[0]  ,item1[1]))    
+
     
     del ipc_instance                # delete ipc instance
 
@@ -421,17 +456,17 @@ def wetter(name=None):
     ret=get_status(3)     # verlange wetterdaten 
     mypri.myprint (DEBUG_LEVEL2, "get_status(3) bringt returncode: {}".format(ret))
     if ret[0]==0:
-        for i in range(len(ret[1][0])):
-#            print (ret[1][0][i][0])
-#            print (ret[1][0][i][1])
-           
-            list_indoor.append("{:<19} {:>18}".format(ret[1][0][i][0]  + ": " ,ret[1][0][i][1] ))
+#        print (len(ret[1][0]))
+        for i in range(len(ret[1][0])):             # länge der ersten liste
+           list_indoor.append("{:<19} {:>18}".format(ret[1][0][i][0]  + ": " ,ret[1][0][i][1] ))
+ 
+
         for i in range(len(ret[1][1])):
 #            print (ret[1][0][i][0])
 #            print (ret[1][0][i][1])
            
             list_outdoor.append("{:<19} {:>18}".format(ret[1][1][i][0]  + ": " ,ret[1][1][i][1] ))
-
+#            print (list_outdoor)
 
 
      #   ret[1]=["aa","vv"]

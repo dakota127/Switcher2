@@ -345,10 +345,10 @@ class Wetter (MyPrint):
         self.wetterlist.append(status_wetter_innen)
         self.wetterlist.append(status_wetter_aussen)
         
-        stati=json.dumps(self.wetterlist)
+ #       stati=json.dumps(self.wetterlist)
+ #       return(stati)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
+        return(self.wetterlist)
         
-        return(stati)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
-  
 # ---- public method get wetter_data   -------------------------------
     def get_wetter_data_part(self):
         self.myprint (DEBUG_LEVEL1,"--> get_wetter_data_part() called  ")

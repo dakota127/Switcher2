@@ -5,8 +5,18 @@
 #   dieser String wird vom Switcher an den Client übergeben ,
 #   dieser wandelt das Json Object wieder in einen Python List um.
 #
+
+info_server = [
+                ["Anz Infotuples", "5"],
+                ["Anz Dosen konfig", " "],
+                ["Wetter konfig", " "],
+                ["Reserve1"," "],             
+                ["Reserve2"," "],            
+                ]
+                
 status_klein = [
- 
+                info_server,
+                            
                 ["Dosenstatus", " " ],
                 ["Nächste Aktion", " " ],
                 ["File-ID", " " ],       
@@ -24,7 +34,9 @@ status_klein = [
 #   dieser wandelt das Json Object wieder in einen Python List um.
 #
 status_gross = [
-                ["Version / Hostname", " " ],
+                info_server,
+            
+                ["Version / Hostname / Dosen", " " ],
                 ["Laufzeit Tage", " " ], 
                 ["Debug_Status"," " ],
                 ["Testmode"," " ],

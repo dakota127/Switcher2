@@ -51,6 +51,7 @@ from sub.swipc import IPC_Server    # Class IPC Server
 from sub.swcfg_switcher import cfglist_swi
 from sub.swdefstatus import status_klein
 from sub.swdefstatus import status_gross
+from sub.swdefstatus import info_server
 
 from sub.swmqtt import MQTT_Conn        # Class mQTT
 from sub.swwetter import Wetter 
@@ -73,7 +74,7 @@ DEBUG_LEVEL2=2                  # 'Konstanten'
 DEBUG_LEVEL3=3                  # 'Konstanten'
 ALIVE_INTERVALL_1 = 2400     # in Sekunden, also: 2400 /60  gleich 40 min 
 ALIVE_INTERVALL_2 = 86400     # in Sekunden, also: 86400 /60  gleich 1440 min gleich 24 Std        
-__VERSION__ = '2.1'             # Switcher version
+__VERSION__ = '2.2'             # Switcher version
 
 # ***** Variables *****************************
 # Globals for this module
@@ -116,7 +117,8 @@ start_switcher =0               # datum/zeit Start Switcher
 switcher_version=0              # fuer Statusanzeige
 hostname = ""
 simulation=0                    # no longer used
-anz_dosen=0
+anz_dosen=0                     # anzahl der Dosen, die im xml file definiert sind
+anz_dosen_config = 0            # anzahl der installierten Dosen, aus dem Config File swdosen.ini
 aktive_saison=0
 saison_ist_simuliert=0
 saison_simulate=[0,0]           # fuer Simulation der Seasons:   erstes Element: 0=keine Simulation/1=Siumlation
@@ -127,12 +129,12 @@ saison_simulate=[0,0]           # fuer Simulation der Seasons:   erstes Element:
 
 startart=0                  # not used, war daemon stuff
 term_verlangt=0             # generelle term Variable, 1 heisst fuer alle Loops: beenden
+reboot_verlangt=0           # reboot Pi am Ende des Herunterfahrens von switcher
 forground=0                 # wird gesetzt aber nicht verwendet
 manuell_reset=0             # aus Configfile: fuer manuell geschaltete Dosen, was tun at midnight
 oled_vorhanden=0            # aus Config File not used
 testmode=False              # aus Config File: Testmode Ja/Nein
 
-info_fuer_webserver = [0 for z in range(10)]        # Info, die an den Webserver gesandt wird
 #
 #Nun die wichtigsten Lists of Lists deer ganzen Sauce... hier sind alle Schaltaktionen versorgt
 #   List os List of List .... hier werden alle Schaltaktionen versorgt in swparse2.py
@@ -155,19 +157,20 @@ my_wetter = 0                   # Instanz der Wetter Klasse
 mymqtt_client = 0               # instanz der MQTT Klasse
 actionpars=0                    # instanz des ActionParsers
 ipc_instance=0                  # Instanz der IPC_Server Klasse
+config_instance = 0                      # instanz der ConfigRead Klasse
 dosen=[]                        # list von Doseninstanzen
 #                               # note: instanz der ConfigRead Klasse ist nur in initswitcher() verwendet
 
 # Sonstiges
 blink_thread=0                  # thread handle
 button_thread=0                 # thread handle
-wetter_behandeln = False
+wetter_behandeln = 0
 
-info_fuer_server = [0 for z in range(12)]     
-                                # liste von 10 ints wird als string zum webserver gesandt beim Status request
-                                # index 0 : anzahl Dosen 
-                                # index 1 : switcher mit wettermessung
-                                # index 2-9: for future use
+info_fuer_webserver = [0 for z in range(4)]     
+                                # liste von 4 Elementen, die werden zum webserver gesant beim status request
+                                # index 0 : anzahl Dosen (aus swdosen.ini oder von Web GUI)
+                                # index 1 : switcher konfiguriert mit wettermessung
+                                # index 2 und 3: for future use
 
 
 mqtt_ok = 0                     # init lief ok 0: notok, 1 OK
@@ -245,7 +248,10 @@ def do_stuff_regular():
 #       dies wird in jedem Lop gemacht    
 
     if gpio_home_switch >  0:           # kein Kippschalter definiert, also nichts tun
-        check_home_kippschalter()           # fuer Switcher mit Kippschalter (kommt bald weg)
+        check_home_kippschalter()       # fuer Switcher mit Kippschalter (kommt bald weg)
+
+    info_fuer_webserver[2] ="blabla"    # hier ev. etwas sinnvolles dem websserver mitteilen        
+    info_fuer_webserver[3] ="blabla"    # hier ev. etwas sinnvolles dem websserver mitteilen    
     
     ret_ipc, ret_dose, term_verlangt, ret_debug = ipc_instance.ipc_check(status_erstellen)		# check if request from client came in - and answer it. juni201
 #    debug = ret_debug               # uebernehme debug
@@ -389,8 +395,6 @@ def status_erstellen(was):
     status=""
     mypri.myprint (DEBUG_LEVEL2,  "--> status_erstellen() called, was: {}".format(was))
 
-    convert = (str(w) for w in info_fuer_webserver)     # string aus liste erstellen
-    info_string = ''.join(convert)                      # info meldungen an den Webserver
       
     # status string zusammenbauen, die Dosen anfragen.....
     status=""
@@ -455,27 +459,35 @@ def status_erstellen(was):
 #   Zuerst die List abfuellen und diese vor dem Senden in ein JSON wandeln
 #
 #
-        stat_klein = status_klein.copy()        # wir müssen kopie machen, da wir später ev. 4 Elemente abschneiden
-        stat_klein[0][1] = status[3:]          # Version
-        stat_klein[1][1] = status_nextaction[1]         # Naechste Aktion 
-        stat_klein[2][1] = sais[aktive_saison][4]   # ControlfileID
-        stat_klein[3][1] = daheim                     # zuhause
-        
+ 
+        # index 0 ist bereits gefüllt mit defaultwert, siehe swdefstatus.py
+        status_klein[0][1][1] = info_fuer_webserver[0]     
+        status_klein[0][2][1] = info_fuer_webserver[1]         
+        status_klein[0][3][1] = info_fuer_webserver[2]       
+        status_klein[0][4][1] = info_fuer_webserver[3]     
+          
+        status_klein[1][1] = status[3:]          # Version
+        status_klein[2][1] = status_nextaction[1]         # Naechste Aktion 
+        status_klein[3][1] = sais[aktive_saison][4]   # ControlfileID
+        status_klein[4][1] = daheim                     # zuhause / nicht zuhause
+
         if wetter_behandeln == 1:
-            int,out = my_wetter.get_wetter_data_part()
-            stat_klein[4][1] = int                     # zuhause
-            stat_klein[5][1] = out                     # zuhause
-        else:
-            stat_klein.pop()                        # hinterstes Element der Liste weg
-            stat_klein.pop()                        # hinterstes Element der Liste weg
-        mypri.myprint (DEBUG_LEVEL2,  "status_erstellen: sais: {}".format(stat_klein))
+            int,out = my_wetter.get_wetter_data_part()      # wetter data holen
+            status_klein[5][1] = int                     # indoor data
+            status_klein[6][1] = out                     # outdoor data  
+ 
+        
+#        else:                                       # wir senden keine wetterdaten wenn wetter nicht konfiguriert
+#            stat_klein.pop()                        # hinterstes Element der Liste weg
+#            stat_klein.pop()                        # hinterstes Element der Liste weg
+        mypri.myprint (DEBUG_LEVEL2,  "status_klein erstellen: {}".format(status_klein))
   
         
-        stat_k=json.dumps(stat_klein)          # umwandeln in JSON Object (also ein String)
-        return("stad" + info_string + stat_k)     # Meldungs-ID vorne anhaengen (Statusmeldung)
-                                             # und fertig
+        stat_k = json.dumps(status_klein)           # umwandeln in JSON Object (also ein String)
+        return("stad" + stat_k)       # Meldungs-ID vorne anhaengen (Statusmeldung)
+                                                    # und fertig
 
-    if was == 2:                            # kleiner Status verlangt
+    if was == 2:                           
 #           es ist offenbar grosser Status verlangt
   
         mypri.myprint (DEBUG_LEVEL3, "build status: lastaction= {}, waitaction= {}".format (status_lastaction,status_nextaction))
@@ -483,34 +495,42 @@ def status_erstellen(was):
     #   Nun die Antwort an den Clienten zusammenstellen           
     #   Zuerst die List abfuellen und diese vor dem Senden in ein JSON wandeln
     
-        y = 0
-        status_gross[y][1]=str(switcher_version) + " / " + hostname         # Version
+  
+        # zuerst die daten für den Webserver abfuellen      
+        status_gross[0][1][1] = info_fuer_webserver[0]     
+        status_gross[0][2][1] = info_fuer_webserver[1]         
+        status_gross[0][3][1] = info_fuer_webserver[2]       
+        status_gross[0][4][1] = info_fuer_webserver[3]     
+        
+        y = 1          # beginne bei 1 denn index 0 ist bereits gefüllt mit defaultwert, siehe swdefstatus.py
+
+        status_gross[y][1]=str(switcher_version) + " / " + hostname  + " / " +str(anz_dosen_config)       # Version
         y += 1
         status_gross[y][1]=status_laueft_seit           # Start Dat, laeuft seit
         y += 1
-        status_gross[y][1]=str(debug)          # Debug Flag
+        status_gross[y][1]=str(debug)                   # Debug Flag
         y += 1
-        status_gross[y][1]=str(testmode)          # testmode aus Config-File
+        status_gross[y][1]=str(testmode)                # testmode aus Config-File
         y += 1
-        status_gross[y][1]=scha_stat[3:]          # schaltart aus Config-File
+        status_gross[y][1]=scha_stat[3:]                # schaltart aus Config-File
         y += 1
-        status_gross[y][1]=JANEIN[info_fuer_webserver[1]]      # Switcher Simulation Ja/Nein
+        status_gross[y][1]=JANEIN[wetter_behandeln]    # wetter konfiguration
         y += 1
-        status_gross[y][1]=time.strftime("%d.%B.%Y")           # Aktuelles Datum
+        status_gross[y][1]=time.strftime("%d.%B %Y")    # Aktuelles Datum
         y += 1
-        status_gross[y][1]=wochentage[wochentag]           # Aktueller Tag
+        status_gross[y][1]=wochentage[wochentag]        # Aktueller Tag
         y += 1
-        status_gross[y][1]=str(total_aktionen_protag)           # Anzahl Aktionen dieses Tages
+        status_gross[y][1]=str(total_aktionen_protag)   # Anzahl Aktionen dieses Tages
         y += 1
-        status_gross[y][1]=str(status_anzactions)           # Anzahl Aktionen dieses Tages
+        status_gross[y][1]=str(status_anzactions)       # Anzahl Aktionen dieses Tages
         y += 1
-        status_gross[y][1]=status[3:]           # Dosenstatus
+        status_gross[y][1]=status[3:]                   # Dosenstatus
         y += 1
-        status_gross[y][1]=status_currtime           # Aktuelle ZeiT
+        status_gross[y][1]=status_currtime              # Aktuelle ZeiT
         y += 1
-        status_gross[y][1]=status_waitfor          # Warten auf
+        status_gross[y][1]=status_waitfor               # Warten auf
         y += 1
-        status_gross[y][1]=status_lastaction[1]          # Letzte Aktion
+        status_gross[y][1]=status_lastaction[1]         # Letzte Aktion
         y += 1
         status_gross[y][1]=zimm_last
         y += 1
@@ -522,19 +542,19 @@ def status_erstellen(was):
         y += 1
         status_gross[y][1]=sais[aktive_saison][1].decode() + " / " + sais[aktive_saison][2].decode()         # Von Bis    
         y += 1
-        status_gross[y][1]=sais[aktive_saison][4]   # ControlfileID
+        status_gross[y][1]=sais[aktive_saison][4]       # ControlfileID
         y += 1
-        status_gross[y][1]=JANEIN[saison_ist_simuliert]   # Saison Simulation Ja/Nein ""  #Simulation Ja/Nein
+        status_gross[y][1]=JANEIN[saison_ist_simuliert] # Saison Simulation Ja/Nein ""  #Simulation Ja/Nein
         y += 1
-        status_gross[y][1]=sais[and1][3].decode()   # Aktuelle Saison                     # leer
+        status_gross[y][1]=sais[and1][3].decode()       # Aktuelle Saison                     # leer
         y += 1
         status_gross[y][1]=sais[and1][1].decode() + " / " + sais[and1][2].decode()                           # leer
         y += 1
-        status_gross[y][1]=sais[and2][3].decode()   # Aktuelle Saison                                # leer
+        status_gross[y][1]=sais[and2][3].decode()       # Aktuelle Saison                                # leer
         y += 1
         status_gross[y][1]=sais[and2][1].decode() + " / " + sais[and2][2].decode()                       # leer
         y += 1
-        status_gross[y][1]=daheim                     # leer
+        status_gross[y][1]=daheim                       # leer
         y += 1
         status_gross[y][1]=reset_man[manuell_reset]                   
         y += 1
@@ -548,21 +568,40 @@ def status_erstellen(was):
             else:
                 status_gross[y][1]="nicht verbunden"                
 
+ 
  #   print (status_gross)
         stati=json.dumps(status_gross)          # umwandeln in JSON Object (also ein String)
-        return("stat" + info_string + stati)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
-        
-    if was == 3:                            # kleiner Status verlangt
+        return("stat" + stati)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
+  
+
+          
+    if was == 3:                            # Wetter Status verlangt
 #           es ist offenbar Wetter Status verlangt
+
+        listept=[]
+        info_server[1][1] = info_fuer_webserver[0]     
+        info_server[2][1] = info_fuer_webserver[1]         
+        info_server[3][1] = info_fuer_webserver[2]       
+        info_server[4][1] = info_fuer_webserver[3]   
+        listept.append(info_server)
         if wetter_behandeln == 1:
             stat_g = my_wetter.get_wetter_data_all()
-        else:
-            li = [[["Wetter Innen", "Ist nicht konfiguriert"]],[["Wetter Aussen", "Ist nicht konfiguriert"]]]
-            stat_g=json.dumps(li)          # umwandeln in JSON Object (also ein String)
-            print (stat_g)
-#        print ("Switcher bekommt: {}, Type: {}".format(retu, type(retu)))
             
-        return("wett" + info_string + stat_g)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
+      #      print ("------stat_g ---------------------")   
+      #      print (stat_g)        
+            listept.append (stat_g[0] )
+            listept.append (stat_g[1] )            
+      #      print ("-------------------------------")
+      #      print (listept)
+            stat_g=json.dumps(listept)   
+        else:
+        
+#            li = [[["Wetter Innen", "Ist nicht konfiguriert"]],[["Wetter Aussen", "Ist nicht konfiguriert"]]]
+            listept.append(["Wetter Innen", "Ist nicht konfiguriert"])
+            listept.append(["Wetter Aussen", "Ist nicht konfiguriert"])
+            stat_g=json.dumps(listept)          # umwandeln in JSON Object (also ein String)
+            
+        return("wett" + stat_g)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
          
     
 
@@ -570,7 +609,7 @@ def status_erstellen(was):
 #   Parameter (kommen von ipc_check(): funktion und dosennummer
 def  ipc_behandeln (func,wdose):
 
-    global manuell_reset
+    global manuell_reset, term_verlangt, reboot_verlangt
     
     mypri.myprint (DEBUG_LEVEL2,  "--> ipc_behandeln() gestartet mit func: %d  wdose: %d" % (func,wdose))	#        juni2018
 
@@ -607,7 +646,21 @@ def  ipc_behandeln (func,wdose):
     elif func == 10:                                     # xor zuhause
         do_zuhause()
         pass      
-    
+    elif func == 11:                                     # anzahl Dosen vorhanden, paramater wdose ist anzahl
+        path1 = os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script laeuft
+
+        dosenconfig_file = path1 + "/swdosen.ini"
+        config_instance.write_value (dosenconfig_file, int(wdose))
+        anz_dosen_config = int(wdose)                   # in diese variable versorgen
+        info_fuer_webserver[0] = anz_dosen_config       # wird später an den webserver uebermitelt
+        term_verlangt = 1                               # dies führt zu Beenden des switchers und zu reboot pi
+        reboot_verlangt = 1
+        pass      
+    elif func == 12:                                     # terminate and reboot pi
+        term_verlangt = 1                               # dies führt zu Beenden des switchers und zu reboot pi
+        reboot_verlangt = 1
+        pass      
+  
     else:
         mypri.myprint (DEBUG_LEVEL0, "ipc_behandeln:  falsche func: {}".format(func))
 
@@ -699,10 +752,10 @@ def init_switcher(start):
     global actions_only,wochentag
     global GPIO, dosen
     global list_tage,list_dose
-    global mypri,ipc_instance
+    global mypri,ipc_instance, config_instance
     global debug                # hier global deklariert, weil veraendert wird in dieser Funktion
     global zuhause, zuhause_old
-    global actionpars, anz_dosen
+    global actionpars, anz_dosen,anz_dosen_config
     global start_switcher,manuell_reset,switcher_version,startart
     global gpio_home_switch,gpio_home_button,gpio_home_led, gpio_blink, oled_vorhanden, testmode
     global blink_thread,term_verlangt, hostname
@@ -710,6 +763,7 @@ def init_switcher(start):
     global button_thread
     global info_fuer_webserver
     global mymqtt_client, mqtt_ok, mqtt_setup, wetter_behandeln, my_wetter
+
 
 #  posit kein keyboard IR
     try:
@@ -743,7 +797,7 @@ def init_switcher(start):
         mypri.myprint (DEBUG_LEVEL0,  "Gestartet: {} Version: {} Python: {}  Startart: {}  Hostname: {}".format (modulename,switcher_version, python_version, startart,hostname))   # print signatur                                                           
         mypri.myprint (DEBUG_LEVEL0,  "--> init_switcher gestartet")	# wir starten       juni2018
     
-        config = ConfigRead(debug)        # instanz der ConfigRead Class
+        config_instance = ConfigRead(debug)        # instanz der ConfigRead Class
         
         signal.signal(signal.SIGTERM, sigterm_handler)  # setup Signal Handler for Term Signal
         signal.signal(signal.SIGHUP, sigterm_handler)  # setup Signal Handler for Term Signal
@@ -751,7 +805,7 @@ def init_switcher(start):
             mypri.myprint (DEBUG_LEVEL1,  "Switcher Debug-Output verlangt")	# wir starten       juni2018
     
         configfile=path1 + "/swconfig.ini"
-        ret=config.config_read(configfile,"switcher",cfglist_swi)
+        ret=config_instance.config_read(configfile,"switcher",cfglist_swi)
         if ret > 0:
             print("config_read hat retcode: {}".format (ret))
             sys.exit(2)
@@ -813,6 +867,13 @@ def init_switcher(start):
         mypri.myprint (DEBUG_LEVEL1, "switcher2 GPIO-Homeswitch: {} GPIO-Homebutton: {} GPIO-Homeled: {} GPIO-Blink: {} Oled: {} ".format(gpio_home_switch,gpio_home_button,gpio_home_led,gpio_blink,oled_vorhanden))
     
     #  vorlaeufug alles aus dem Configfile entnommen
+    # nun den config file swdosen.ini lesen
+    
+        mypri.myprint (DEBUG_LEVEL1,"switcher2 Lese den file swdosen.ini ")  
+        dosenconfig_file = path1 + "/swdosen.ini"
+        anz_dosen_config = config_instance.read_dosenconfig (dosenconfig_file)
+        mypri.myprint (DEBUG_LEVEL0,  "Anzahl Dosen konfiguriert in swdosen.ini: {}". format(anz_dosen_config))     
+ 
     
         if gpio_home_switch > 0:            # fuer backwards compatibilty mit kippschalter
             zuhause=not GPIO.input(gpio_home_switch)
@@ -837,7 +898,7 @@ def init_switcher(start):
         mqtt_ok = 0
         
         if wetter_behandeln == 1:
-            info_fuer_webserver[1] = 1
+            info_fuer_webserver[1] = 1              # wird später an den Webserver uebermittelt, beim status request
             mqtt_setup = 1
             
             
@@ -886,9 +947,14 @@ def init_switcher(start):
                 anz =  (len(list_dose[0][i]))
                 if anz >  anz_dosen: anz_dosen=anz
         anz_dosen -= 1      # liste hat 5 elemente , es gibt aber -1 dosen
-        mypri.myprint (DEBUG_LEVEL1, "Beim Parsen wurden maximal {} Dosen gefunden".format( anz_dosen))
-        info_fuer_webserver[0] = anz_dosen
-    
+        
+ # Anzahl Dosen im XML File und Anzahl Dosen im Konfigfile swdosen.in können verschieden sein.
+ # Wert aus Konfigfile sagt aus, wieviele Dosen real vorhanden sind. Dies kommt vom Benutzer.
+ # entweder via Client swclient2.py oder vom Webinterface.       
+        mypri.myprint (DEBUG_LEVEL0, "Beim Parsen wurden {} Dosen gefunden".format( anz_dosen))
+        
+        mypri.myprint (DEBUG_LEVEL0,  "Anzahl Dosen konfiguriert in swdosen.ini: {} , Anzahl Dosen in XML gefunden: {}". format(anz_dosen_config, anz_dosen))    
+        info_fuer_webserver[0] = anz_dosen_config       # wird an den Webserver uebergeben
         
         mypri.myprint (DEBUG_LEVEL1,  "switcher2: Files parsed, nun geht es los...")	# wir starten
         if actions_only: 
@@ -1227,7 +1293,13 @@ def terminate(was):
             mymqtt_client.mqtt_stop()   # mqtt client beenden
             del mymqtt_client
         del my_wetter
-    mypri.myprint (DEBUG_LEVEL0,   "switcher2 terminating")
+        
+    if reboot_verlangt == 1:
+        mypri.myprint (DEBUG_LEVEL0,   "switcher2 terminating mit reboot pi")
+        os.system('sudo shutdown -r now')
+    else:
+        mypri.myprint (DEBUG_LEVEL0,   "switcher2 terminating")
+    
     sys.exit(2)                         #  fertig lustig
 
   # terminating switching    juni2018

@@ -123,7 +123,7 @@ class IPC_Server(MyPrint):
 
             elif  "sdeb" in self.message.strip():    # stop debug
                 self.debug=0
-            elif  "stop" in self.message.strip():
+            elif  "stop" in self.message.strip():   # client verlangt beenden des switchers (stop)
                 self.myprint (DEBUG_LEVEL3, "ipc_check: stop received von client")
                 self.term=1
             elif  "stat" in self.message.strip():
@@ -139,29 +139,33 @@ class IPC_Server(MyPrint):
                 self.myprint (DEBUG_LEVEL3, "Serverdelay: %d" % s)
                 self.delay=s/1000
 
-            elif  self.message.find("aein") != -1:     # Command Alle ein
-                self.retcode=5                       # 5 means alle ein
-            elif  self.message.find("aaus") != -1:     #
-                self.retcode=6                       # 6 means alle aus
-            elif  self.message.find("anor") != -1:     #
-                self.retcode=7                       # 6 means alle reset auf auto
-            elif  self.message.find("mmit") != -1:     #
-                self.retcode=8                       # 6 means alle reset auf auto
-            elif  self.message.find("mnie") != -1:     #
-                self.retcode=9                       # 6 means alle reset auf auto
-            elif  self.message.find("home") != -1:     #
-                self.retcode=10                       # change zuhause status
+            elif  self.message.find("aein") != -1:      # Command Alle ein
+                self.retcode=5                          # 5 means alle ein
+            elif  self.message.find("aaus") != -1:      #
+                self.retcode=6                          # 6 means alle aus
+            elif  self.message.find("anor") != -1:      #
+                self.retcode=7                          # 7 means alle reset auf auto
+            elif  self.message.find("mmit") != -1:      #
+                self.retcode=8                          # 8 means mauelle reset mitternacht
+            elif  self.message.find("mnie") != -1:      #
+                self.retcode=9                          # 9 means manuelle nie reset
+            elif  self.message.find("home") != -1:      #
+                self.retcode=10                         # change zuhause status
 
-            elif  self.message.find("ein") != -1:    # Command dXein
+            elif  self.message.find("ein") != -1:       # Command dXein
                 self.dose=int(self.message[1:2])
-                self.retcode=2                       # 2 means einschalten
-            elif  self.message.find("aus") != -1:     # Command dXaus
+                self.retcode=2                          # 2 means einschalten
+            elif  self.message.find("aus") != -1:       # Command dXaus
                 self.dose=int(self.message[1:2])
-                self.retcode=3                       # 3 means ausschalten
-            elif  self.message.find("nor") != -1:     # Command dXnor
+                self.retcode=3                          # 3 means ausschalten
+            elif  self.message.find("nor") != -1:       # Command dXnor
                 self.dose=int(self.message[1:2])
-                self.retcode=4                       # 4 means normal
-
+                self.retcode=4                          # 4 means normal
+            elif  self.message.find("dos") != -1:       # Command dosN       wieviele dosen sind vorhanden
+                self.dose=int(self.message[3:4])        #  damit wird confifile swdosen.ini bestückt.                 
+                self.retcode=11                     
+            elif  self.message.find("rebo") != -1:     # Command reboot verlangt
+                self.retcode=12                       # signals reboot to switcher
             else:                   # unbekannter request
                 self.myprint (DEBUG_LEVEL2,   "--> IPC_Server falscher request: {}".format(self.message))
                 sleep(0.1)

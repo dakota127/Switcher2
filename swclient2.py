@@ -42,6 +42,7 @@ client=0
 poll=0
 context=0
 debug=0
+reboot_verlangt = 0
 valid_commands =  [                 # tuple of valid commands
         "stop" ,                  #  terminate switcher
         "sdeb" ,                   # switcher stop debug output
@@ -50,6 +51,11 @@ valid_commands =  [                 # tuple of valid commands
         "stad" ,                     # kurzen status
         "term",                    # terminate the client (not switcher)
         "spez",
+        "dos1",
+        "dos2",
+        "dos3",
+        "dos4",
+        "dos5",
         "d1ein",
         "d2ein",
         "d3ein",
@@ -71,6 +77,8 @@ valid_commands =  [                 # tuple of valid commands
         "mmit",
         "mnie",
         "wett",
+        "rebo",             # sende reboot verlangt an den switcher
+        "reboc"             # dieser client mach reboot pi
         
         ]                    # switcher soll antwort verspätet senden
 
@@ -153,29 +161,40 @@ def printReply(meldung):
     spos=0
     epos=0
     
-    
-    if meldung.find("stat") == -1 and meldung.find("stad") == -1: 
+    if meldung.find("stat") == -1 and meldung.find("stad") == -1 and meldung.find("wett") == -1: 
         print ("Antwort vom Server: %s" % meldung)
-        return       #  ss ist nicht stat oder stad
+        return       #  ss ist nicht stat oder stad oder wett
+
+    # es ist antwort auf statusrequest oder wetter
     meldung = meldung[4:]         # entferne meldungs id 4 char
-    info_webserver = meldung [0:10]
-    meldung = meldung [10:]
-    print ("Info fuer Webserver: {}".format(info_webserver))
+
     try:
         meld=json.loads(meldung)   # JSON Object wird in Python List of List gewandelt
-   #     print ("Reply : {}".format(meld))
-
     except:
         print ("Status string nicht gut...")
         return
-    print ("--------------------------------------")
 
-    print (meld)
-
-    for i in range(len(meld)):
-        print ("{:18}:  {:<18}".format (meld[i][0]  ,meld[i][1]))
+    # antwort besteht aus einer Liste mit Einträgen
+    # index[0] sind die Daten an den Webserver
+    # restliche einträge sind die DAten
     
-    #    print ("{:18}:  {:<18}".format (meld[i][0].encode(encoding='UTF-8')  ,meld[i][1].encode(encoding='UTF-8')))
+    print ("Info fuer den Webserver: -------------")  
+    for i in range(len(meld[0])):
+        print ("{:18}:  {:<18}".format (meld[0][i][0]  ,meld[0][i][1]))
+    
+    meld.pop(0)             # liste mit indo an den webserver wegpoppen
+    
+    
+    print ("Und nun die Daten: -------------------")     
+
+#  wetterdaten ist liste laenge 2
+    if len(meld) == 2 :   
+        for item1 in meld :    
+            for item2 in item1 :
+                print ("{:18}:  {:<18}".format (item2[0]  ,item2[1]))
+    else:       # andere daten haben liste mit mehr als 2 items
+        for item1 in meld :    
+            print ("{:18}:  {:<18}".format (item1[0]  ,item1[1]))    
 
     print ("--------------------------------------")
 #----------------------------------------------------------
@@ -207,7 +226,7 @@ def get_command() :
 
 #----------------------------------
 def runit():
-    global debug
+    global debug, reboot_verlangt
 # Loop until command term is given
     while True:
     # get command from user
@@ -215,6 +234,9 @@ def runit():
         cmd = cmd.strip()
                                 # zuerst spezielle commands behandeln
         if cmd.find("term") != -1: break 
+        if cmd.find("reboc") != -1: 
+            reboot_verlangt = 1
+            break 
         if cmd.find("mdeb") != -1: debug=1
         if cmd.find("sdeb") != -1: debug=0
 
@@ -280,9 +302,13 @@ if __name__ == "__main__":
 #  now run the programm, falls vond er Commandline gestartet        
     runit()                 # get commands from Console and send them....
                             # kommt zurück, wenn term command gegeben oder Verbindung nicht geht.
-    if debug: print ("Shut down.")
-# 
-    del ipc
-    print ("Client terminating...")
+    del ipc                        
+    
+    if reboot_verlangt == 1:
+        print ("Terminating mit reboot pi")
+        sleep(2)
+        os.system('sudo shutdown -r now')
+    else:
+        print ("Client terminating...")
 #            
 #
