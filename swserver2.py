@@ -385,12 +385,12 @@ def get_status(status_art):
 
         return(retco)     
  
-    if debug > 0:
+    if debug > 1:
         print ( "--> diese meldung gekommen: ")
         print (retcode[1])  
     meldung=retcode[1][4:]      # wir nehmen die ersten 4 Char nicht
   
-    if debug > 0:
+    if debug > 1:
         print ( "--> diese meldung gekommen nach strip command: ")
         print (meldung)     
     try:
@@ -400,7 +400,7 @@ def get_status(status_art):
         retco.append(9)
         return(retco)
 
-    if debug > 0:
+    if debug > 1:
         print ( "--> diese meldung als liste gekommen nach json.loads: ")
         print (meld)     
         
