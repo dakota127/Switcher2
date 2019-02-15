@@ -11,19 +11,30 @@
 		    <a href="status.html">Status </a> 
 		    <a href="swlog.html">Log </a> 
 		    <a href="wetter.html">Wetter </a> 
-			<a href="about.html">About </a> 
+
 	</div>
 
 
 <div class="container">
 
 
-                <ul>
-                    {% for item in name -%}
-                    <li>  {{ item }} </li>
-                    {% endfor %}
-                </ul>     
+<ul>
+    {% for item in name -%}
+        <li>  {{ item }} </li>
+    {% endfor %}
+</ul>     
 
+
+<form id="my-form" method="post" action="{{ url_for('set_dosen') }}">
+  <fieldset> 
+    <label>Anzahl Dosen</label><br>
+  
+        {% include html_file %}
+        
+      <input class="button" name="doit" type="submit" value="Uebernehmen"></span><br />  
+      <p>Achtung: Uebernehmen führt zu Reboot des Switchers </p>
+  </fieldset> 
+</form>
 
 
 </div>

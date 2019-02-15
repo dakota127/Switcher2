@@ -178,18 +178,20 @@ def printReply(meldung):
     # index[0] sind die Daten an den Webserver
     # restliche einträge sind die DAten
     
-    print ("Info fuer den Webserver: -------------")  
+    print ("Info fuer den Webserver: -------- Anz Items: {}".format(len(meld[0])))  
     for i in range(len(meld[0])):
         print ("{:18}:  {:<18}".format (meld[0][i][0]  ,meld[0][i][1]))
     
     meld.pop(0)             # liste mit indo an den webserver wegpoppen
     
     
-    print ("Und nun die Daten: -------------------")     
+    print ("Und nun die Daten: -------------- Anz Items: {}".format(len(meld)))     
 
-#  wetterdaten ist liste laenge 2
-    if len(meld) == 2 :   
-        for item1 in meld :    
+#  wetterdaten ist liste laenge 2, alle anderen haben mehr items
+#  not very well done..... but it works
+    if len(meld) == 2 :         # sind wetterdaten
+        for item1 in meld :   
+  #          print ("len item1: {}".format(len(item1))) 
             for item2 in item1 :
                 print ("{:18}:  {:<18}".format (item2[0]  ,item2[1]))
     else:       # andere daten haben liste mit mehr als 2 items

@@ -135,7 +135,8 @@ if __name__ == '__main__':
 
     mypri.myprint (DEBUG_LEVEL0,  "\nnun test mit lesen swdosen.ini file")
     
-    anz = config.read_dosenconfig ()
+    file23 = path1 + "/swconfig.ini")
+    anz = config.read_dosenconfig (       configfile=path1 + "/swconfig.ini")
     mypri.myprint (DEBUG_LEVEL0,  "\ngemeldet wird anzahl dosen: {}". format(anz))     
            
     mypri.myprint (DEBUG_LEVEL0,  "\nnun test mit schreiben swdosen.ini file")

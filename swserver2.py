@@ -55,12 +55,34 @@ mypri=0
 AKTION=["Eingeschaltet","Ausgeschaltet","Zurückgesetzt auf Auto"]
 app = Flask(__name__)
 pfad =""
-info_fuer_webserver = 0
+info_fuer_webserver = []
                                     # liste von 10 ints wird als string vom Switcher gesandt beim Status request
                                     # index 0 : anzahl Dosen 
                                     # index 1 : switcher mit wettermessung
                                     # index 2-9: for future use
+anzdosn_gemeldet = 0;
+wetter_konfiguriert = 0;
 
+#  liste der html files: für Auswahl der Anzahl konfigurierten Dosen
+select_anzdosen_htmlfiles = [
+            "empty",
+            "anzdosen_select1.html",
+            "anzdosen_select2.html",
+            "anzdosen_select3.html",
+            "anzdosen_select4.html",
+            "anzdosen_select5.html",
+            ]
+
+#  liste der html files: für Schalten der Dosen, verschieden Anzahl Dosenw
+select_dosenschalt_htmlfiles = [
+            "empty",
+            "dosen_schalt1.html",
+            "dosen_schalt2.html",
+            "dosen_schalt3.html",
+            "dosen_schalt4.html",
+            "dosen_schalt5.html",
+            ]
+            
 # ***** Function Parse commandline arguments ***********************
 
 #----------------------------------------------------------
@@ -234,6 +256,41 @@ def reset_manuell(how):
         retco.append(8)
     return(retco)     
 
+#--------------------------------------------
+#   tue etwas und gebe dann output zurück 
+#   dies wird dann in html code eingesetzt
+def set_anzdosen (anzahl):
+    meld2=[]
+    retco=[]
+    global ipc
+
+    text="Neue Anzahl Dosen gesetzt, Reboot Switcher, bitte warten..."
+    
+    mypri.myprint (DEBUG_LEVEL1, "set_anzdosen() called, reset: {}".format(anzahl))
+    
+    
+    message = "dos" + str(anzahl)
+  
+    
+    ipc_instance=IPC_Client(debug,REQUEST_TIMEOUT,  ipc_data ,REQUEST_RETRIES)
+
+    retcode=ipc_instance.ipc_exchange(message) 
+    if retcode[0] == 9:                        # server antwortet nicht
+        retco.append(9)
+        retco.append("Switcher antwortet leider nicht...")
+        
+        del ipc       #  lösche Instanz von IPC_Client
+
+        return(retco)     
+      
+    if  (retcode[1].find('ackn') != -1):        # switcher sendet ackn, very good
+        retco.append(0)
+        retco.append(text)
+    else:
+        retco.append(8)
+        retco.append("Setzen Anzahl Dosen fehlgeschlagen")
+    return(retco)     
+
 
 #--------------------------------------------
 #   tue etwas und gebe dann output zurück 
@@ -304,11 +361,12 @@ def dose_behandeln(dos,was):
 def get_status(status_art):
     meld2=[]
     retco=[]
-    global ipc_instance
+    global ipc_instance, anzdosn_gemeldet, wetter_konfiguriert
     global info_fuer_webserver
 
     mypri.myprint (DEBUG_LEVEL2," get_status started".format(status_art))
     
+    info_fuer_webserver = []        # liste leer setzen, info kommt mit jeder meldung von Switcher
     if status_art == 1:
         message="stad"      # kurzer status
     elif status_art == 2:                       
@@ -354,15 +412,18 @@ def get_status(status_art):
         print ( "Info fuer den Webserver: -------------")  
         for i in range(len(meld[0])):
             print ("{:18}:  {:<18}".format (meld[0][i][0]  ,meld[0][i][1]))
+  
+    for i in range(int(meld[0][0][1])):
+        info_fuer_webserver.append(meld[0][i][1])
     
-
-  # entnehmen der Daten, die für uns den webserver sind....      
-#    anz_dosen_konfiguriert =  meld[1][1]
-#    wetter_konfiguriert =     meld[2][1]
-#    reserve1 =  meld[3][1]
-#    reserve2 =  meld[3][1]
-#    mypri.myprint (DEBUG_LEVEL1, "swserver2: daten für mich, anzdosen: {}, wetter: {}, reserve1: {}, reserve2: {}". format(anz_dosen_konfiguriert, wetter_konfiguriert, reserve1, reserve2))
+    print ("info webserver: {}". format(info_fuer_webserver))
     
+    anzdosn_gemeldet = int(info_fuer_webserver[1])
+    wetter_konfiguriert = int(info_fuer_webserver[2])
+ 
+    print ("Anzahl Dosen gemeldet vom Switcher2: {}".format(anzdosn_gemeldet))
+    print ("Wetter Konfig gemeldet vom Switcher2: {}".format(wetter_konfiguriert))  
+   
     meld.pop(0)             # liste mit info an den webserver wegpoppen
     if debug > 0:      
         print ("Und nun die Daten: ------------------- len(meld): {}". format (len(meld)))  
@@ -388,10 +449,11 @@ def get_status(status_art):
 #----------------------------------------------
 # Callback für index.html
 #--------------------------------------------
-@app.route('/index.html')
+@app.route('/index.html', methods=['GET', 'POST'])
 @app.route('/')
-def home(name = None):
+def home (name = None):
     stat_list = []
+    dosen = 3
                           #  ruft  get_status(1) auf und setzt den returnwert in die variable statklein
     ret = get_status(1)     # verlange kurzen status
     mypri.myprint (DEBUG_LEVEL2, "get_status(1) bringt returncode: {}".format(ret))
@@ -401,9 +463,13 @@ def home(name = None):
             stat_list.append("{:<19} {:>18}".format(ret[1][i][0]  + ": " ,ret[1][i][1] ))
 
      #   ret[1]=["aa","vv"]
-        return render_template('index.html', statklein = stat_list)
+        print ("---- dosen: {}". format(dosen))
+        mypri.myprint (DEBUG_LEVEL1, "going to render index.html")      
+        return render_template('index.html', statklein = stat_list, html_file2 = select_dosenschalt_htmlfiles [anzdosn_gemeldet])
     else:
         # switcher gibt Fehlerzurück oder reagiert nicht
+        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")      
+
         return render_template('other.html', name = ret[1])
         
 #----------------------------------------------
@@ -412,7 +478,8 @@ def home(name = None):
 @app.route('/status.html')
 def status(name=None):
     stat_list=[]
-       
+
+    mypri.myprint (DEBUG_LEVEL1, "app.route /status called")   
                             #  ruft  get_status(2) auf und setzt den returnwert in die variable name
     ret=get_status(2)     # verlange kurzen status
     mypri.myprint (DEBUG_LEVEL2, "get_status(2) bringt returncode: {}".format(ret))
@@ -424,9 +491,13 @@ def status(name=None):
             stat_list.append("{:<19} {:>18}".format(ret[1][i][0]  + ": " ,ret[1][i][1] ))
     
      #   ret[1]=["aa","vv"]
-        return render_template('status.html', name=stat_list)
+        mypri.myprint (DEBUG_LEVEL1, "going to render status.html")      
+
+        return render_template('status.html', name=stat_list, html_file = select_anzdosen_htmlfiles[anzdosn_gemeldet])
     else:
         # switcher gibt Fehlerzurück oder reagiert nicht
+        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")      
+
         return render_template('other.html', name=ret[1])
 
 #----------------------------------------------
@@ -434,6 +505,9 @@ def status(name=None):
 #--------------------------------------------
 @app.route('/about.html')
 def about():
+
+    mypri.myprint (DEBUG_LEVEL1, "going to render about.html")      
+
     return render_template('about.html')
 
 #----------------------------------------------
@@ -441,7 +515,11 @@ def about():
 #--------------------------------------------
 @app.route('/swlog.html')
 def log():
+    mypri.myprint (DEBUG_LEVEL1, "app.route /swlog called")     
+
     zeilenlist = do_getlog()
+    mypri.myprint (DEBUG_LEVEL1, "going to render swlog.html")      
+
     return render_template('swlog.html',logzeilen = zeilenlist)
 
 #----------------------------------------------
@@ -451,6 +529,7 @@ def log():
 def wetter(name=None):
     list_indoor=[]
     list_outdoor=[]
+    mypri.myprint (DEBUG_LEVEL1, "app.route /wetter called")     
 
                             #  ruft  get_status(3) auf und setzt den returnwert in die variable name
     ret=get_status(3)     # verlange wetterdaten 
@@ -470,9 +549,11 @@ def wetter(name=None):
 
 
      #   ret[1]=["aa","vv"]
+        mypri.myprint (DEBUG_LEVEL1, "going to render wetter.html")      
         return render_template('wetter.html', name = list_indoor, name2 = list_outdoor)
     else:
         # switcher gibt Fehlerzurück oder reagiert nicht
+        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")      
         return render_template('other.html', name=ret[1])
 
 #----------------------------------------------
@@ -484,7 +565,8 @@ def ackno():
     error2=False 
     error3=False
     ret=[0,0]
-    
+ 
+    mypri.myprint (DEBUG_LEVEL1, "app.route /ackno called")     
 #  die verschiedenen input felder untersuchen, schauen, was gekommen ist.   
 #
 #   zuerst umschaltung zuhase prüfen
@@ -539,14 +621,48 @@ def ackno():
     #   nun antwort behandeln 
         ret=dose_behandeln(dose,aktion)  #       kurzer oder langer Status erstellen
 
+    mypri.myprint (DEBUG_LEVEL1, "going to render ackno.html")    
     if ret[0]==0:                       # Ackno.html ausgeben mit Angabe der gemachten Aktion
-        return render_template('ackno.html', returncode=ret[0], dose=ret[1])
+        return render_template('ackno.html', returncode=ret[0], textfeld = ret[1])
     else:
-    
+        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")        
         # switcher gibt Fehlerzurück oder reagiert nicht
         return render_template('other.html', name=ret[1])
     
+ #----------------------------------------------
+# Callback für manuelles schalten, kommt von Form zurück     
+@app.route('/set_dosen', methods=['GET', 'POST'])
+def set_dosen():
+    error0=False 
+    error1=False 
+    error2=False 
+    error3=False
+    ret=[0,0]
+    dosenanz = 0
+    mypri.myprint (DEBUG_LEVEL1, "app.route /set_dosen called") 
+#  das input felder (anzahl dosen untersuchen, schauen, was gekommen ist.   
+#
+
+    try:
+        dosenanz = int(request.form['anzahl_dosen'])
+        mypri.myprint (DEBUG_LEVEL1, "Anzahl dosen bestehend: {}, anzahl neu: {}". format(anzdosn_gemeldet,dosenanz) )   
     
+        ret = set_anzdosen (dosenanz)    
+
+    except:
+        error0=True
+        mypri.myprint (DEBUG_LEVEL1, "Input check: anzahl_dosen nichts gekommen")
+        ret[0] = 9
+ 
+    mypri.myprint (DEBUG_LEVEL1, "going to render ackno.html")    
+    if ret[0]==0:                       # Ackno.html ausgeben mit Angabe der gemachten Aktion
+        return render_template('ackno.html', returncode=ret[0], textfeld = ret[1])
+    else:
+        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")       
+        # switcher gibt Fehlerzurück oder reagiert nicht
+        return render_template('other.html', name=ret[1])
+    
+       
 
 #----------------------------------------------
 # Programm startet hier....

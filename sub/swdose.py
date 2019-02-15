@@ -191,8 +191,8 @@ class Dose(MyPrint):
         if self.schaltmodus == 1: 
             return            # wenn modus manuell mach nichts weiter
 
-        if self.schaltprio == 2: 
-            return            # wenn modus_1 = 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
+        if self.schaltprio == 2 or self.schaltprio == 0: 
+            return            # wenn prio 0 oder 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
        
         self.time_last_aktion =  datetime.now()         # zeit merken 
         
@@ -208,8 +208,8 @@ class Dose(MyPrint):
         self.zuhause=False
         if self.schaltmodus == 1: 
             return   # manuell, wir machen nichts
-        if self.schaltprio == 2: 
-            return            # wenn modus_1 = 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
+        if self.schaltprio == 2 or self.schaltprio == 0: 
+            return            # wenn prio 0 oder 2 mach nichts weiter, dose wir von zuhause/nicht zuhause nicht beeinflusst
        
         self.time_last_aktion =  datetime.now()         # zeit merken 
             
@@ -261,8 +261,8 @@ class Dose(MyPrint):
 #   setzt Modus auf Auto (0) und schaltet Dose gemäss dem aktuellen internen Status
     def reset_manuell(self):
         self.myprint (self.debug_level2_mod,  "--> dose {} reset_manuell called, modus: {}, status_intern: {}".format (self.dosen_nummer, self.schaltmodus, self.status_intern))
-        if self.schaltmodus == 0:
-            return                  # wir behandlen nur Dosen mit modus manuell
+        if self.schaltmodus == 0 or self.schaltprio == 0:
+            return                  # wir behandlen nur Dosen mit modus manuell, und prio 0 werden auch nicht behandelt
         self.time_last_aktion =  datetime.now()         # zeit merken 
             
         self.schaltmodus = 0
@@ -283,10 +283,13 @@ class Dose(MyPrint):
 # how= 1 für ein, 0 für aus
         self.myprint (self.debug_level2_mod ,  "--> dose {} set_auto called, how: {}  modus: {}  zuhause: {}".format (self.dosen_nummer,how,self.schaltmodus,self.zuhause))
    
+        if self.schaltprio == 0: 
+            return            # wenn prio 0 machen wir gar nichts, diese Dosen werden nur manuell geschaltet
+ 
         self.status_intern = how      # interner status wird in jedem Fall nachgeführt
  
         if self.zuhause :
-            if self.schaltprio == 1:
+            if self.schaltprio == 1:    # solche dosen werden auto geschaltet
                 return                  # wenn jemand da ist wird bloss interner status nachgeführt
     
     
@@ -304,7 +307,9 @@ class Dose(MyPrint):
     def set_auto_virtuell(self, how):
 # how= 1 für ein, 0 für aus
         self.myprint (DEBUG_LEVEL2,  "--> dose {} set_auto_virtuell called, how: {}  modus: {}".format (self.dosen_nummer,how,self.schaltmodus))
-   
+        if self.schaltprio == 0: 
+            return            # wenn prio 0 machen wir gar nichts, diese Dosen werden nur manuell geschaltet
+
         self.status_intern=how      # interner status wird in jedem Fall nachgeführt
 
 
@@ -368,6 +373,8 @@ class Dose(MyPrint):
             
         if self.schaltprio == 2:
             ret = ret+"i"                       # überschreibt alle anderen werte
+        if self.schaltprio == 0:
+            ret = ret+"x"                       # überschreibt alle anderen werte            
         pass
         ret = ret + ":" + str(self.schaltart)     # die schaltart noch dazu
         self.myprint (DEBUG_LEVEL2,  "--> dose {} show_status returns: {}".format (self.dosen_nummer, ret))        

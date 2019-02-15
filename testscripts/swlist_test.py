@@ -125,19 +125,23 @@ def alle_tage_pro_saison (liste, saison):
 #		a: Liste aller vergangenen 	Aktionen eines Tages
 #		b: Liste aller zukünfigen 	Aktionen eines Tages
 #		basierend auf aktueller Zeit
-def aktionen_pro_tag (liste, wochentag):
-	hhmm_tag = [datetime.now().strftime("%H.%M"),datetime.today().strftime("%w")]    # aktuelle Zeit holen
+def aktionen_pro_tag (liste, wochentag, max_dose):
+    print ("sammle alle aktionen pro Tag fuer Dosen kleiner/gleich: {}".format(max_dose))
+    hhmm_tag = [datetime.now().strftime("%H.%M"),datetime.today().strftime("%w")]    # aktuelle Zeit holen
 #	print (hhmm_tag)
-	new_list_vergangen = []
-	new_list_zukunft =[]
+    new_list_vergangen = []
+    new_list_zukunft =[]
 #	print ("liste-wochentag: {}".format(liste[wochentag]))
-	for n in liste[wochentag]:
-#		print ("n ist: {}".format(n))				# ist aktion
-		if hhmm_tag[0] > n[0]:						# hhmm_tag[0] sind Stunden.Minuten, check Actions times to current time
-				new_list_vergangen.append(n)		# addiere zur Liste vergangene Aktionen
-		else:								
-			new_list_zukunft.append(n)				# addiere zur Liste der zukünftigen Aktionen
-	return(new_list_vergangen, new_list_zukunft)	# gebe beide Listen zurück
+    for n in liste[wochentag]:
+
+        print ("n ist fuer Dose: {}".format(n[1]))				# ist aktion
+		
+        if n[1] <= max_dose:
+            if hhmm_tag[0] > n[0]:						# hhmm_tag[0] sind Stunden.Minuten, check Actions times to current time
+                new_list_vergangen.append(n)		# addiere zur Liste vergangene Aktionen
+            else:								
+                new_list_zukunft.append(n)				# addiere zur Liste der zukünftigen Aktionen
+    return(new_list_vergangen, new_list_zukunft)	# gebe beide Listen zurück
 	
 		
 # *************************************************
@@ -192,7 +196,7 @@ if __name__ == '__main__':
 	wochentag = 0
 	liste_aller_tage = alle_tage_pro_saison(list_tage,active_saison )
 	
-	list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, wochentag )
+	list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, wochentag, 3 )
 	
 	print ("\nDaten fuer Wochentag: {}".format(wochentag))	
 	

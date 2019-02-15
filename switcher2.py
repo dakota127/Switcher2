@@ -389,7 +389,8 @@ def status_erstellen(was):
 # was = 3: Wetter Status verlangt
 
     global status_lastaction,status_nextaction,status_laueft_seit
-
+    zimm_next = ""
+    zimm_last = ""
 #    print (get_size(my_wetter))
     
     status=""
@@ -409,6 +410,7 @@ def status_erstellen(was):
     else:
         daheim="Niemand zuhause"
 
+    
     if status_lastaction[0]==99:                # wohl unnoetig 
         zimm_last="Vorlaeufig unbekannt"
     else:
@@ -417,14 +419,14 @@ def status_erstellen(was):
         pass
     else:
         zimm_last=zimm_last.decode()
-        
+     
     if status_nextaction[0]==99:
         zimm_next="Vorlaeufig unbekannt"
     else:
         zimm_next=dosen[status_nextaction[0]-1].get_zimmer()
  
     if type(zimm_next) is str:
-        pass
+            pass
     else:
         zimm_next=zimm_next.decode()
         
@@ -597,10 +599,11 @@ def status_erstellen(was):
         else:
         
 #            li = [[["Wetter Innen", "Ist nicht konfiguriert"]],[["Wetter Aussen", "Ist nicht konfiguriert"]]]
-            listept.append(["Wetter Innen", "Ist nicht konfiguriert"])
-            listept.append(["Wetter Aussen", "Ist nicht konfiguriert"])
+            listept.append([["Wetter Innen", "Ist nicht konfiguriert"]])
+            listept.append([["Wetter Aussen", "Ist nicht konfiguriert"]])
             stat_g=json.dumps(listept)          # umwandeln in JSON Object (also ein String)
-            
+        
+        mypri.myprint (DEBUG_LEVEL2,  "switcher2 wetterdata (json): {}".format(stat_g) ) 
         return("wett" + stat_g)                               # Meldungs-ID vorne anhaengen (Statusmeldung)
          
     
@@ -729,9 +732,10 @@ def alle_tage_pro_saison (liste, saison):
 #		a: Liste aller vergangenen 	Aktionen eines Tages
 #		b: Liste aller zukünfigen 	Aktionen eines Tages
 #		basierend auf aktueller Zeit
-def aktionen_pro_tag (liste, wochentag):
+#       nur dosen nehmen, die kleiner/gleic max_dose sindh
+def aktionen_pro_tag (liste, wochentag,  max_dose):
     mypri.myprint (DEBUG_LEVEL2,   "--> aktionen_pro_tag() called")
-
+    mypri.myprint (DEBUG_LEVEL2,   "sammle alle aktionen pro Tag fuer Dosen kleiner/gleich: {}".format(max_dose))
     hhmm_tag = [datetime.now().strftime("%H.%M"),datetime.today().strftime("%w")]    # aktuelle Zeit holen
 #	print (hhmm_tag)
     new_list_vergangen = []
@@ -739,10 +743,11 @@ def aktionen_pro_tag (liste, wochentag):
 #	print ("liste-wochentag: {}".format(liste[wochentag]))
     for n in liste[wochentag]:
 #		print ("n ist: {}".format(n))				# ist aktion
-        if hhmm_tag[0] > n[0]:						# hhmm_tag[0] sind Stunden.Minuten, check Actions times to current time
-            new_list_vergangen.append(n)		# addiere zur Liste vergangene Aktionen
-        else:								
-            new_list_zukunft.append(n)				# addiere zur Liste der zukünftigen Aktionen
+        if n[1] <= max_dose:                        # nehme nur jene die kleiner/glich sind
+            if hhmm_tag[0] > n[0]:					# hhmm_tag[0] sind Stunden.Minuten, check Actions times to current time
+                new_list_vergangen.append(n)		# addiere zur Liste vergangene Aktionen
+            else:								
+                new_list_zukunft.append(n)			# addiere zur Liste der zukünftigen Aktionen
     return(new_list_vergangen, new_list_zukunft)	# gebe beide Listen zurück
 	
 
@@ -983,7 +988,7 @@ def init_switcher(start):
         # init switching in der Klasse Dose.py
         # also n Instanzen der Klasse Dose erstellen    
     
-        for i in range(anz_dosen):
+        for i in range(anz_dosen_config):
             dos = Dose(i, testmode, debug, path1, mqtt_ok, mymqtt_client)
             if dos.errorcode == 99:
                 mypri.myprint (DEBUG_LEVEL1,  "Dose: {} meldet Fehler {}".format (i+1, dos.errocode))	 
@@ -1121,7 +1126,8 @@ def run_switchter():
 # aus der grossesn Liste (list_tage) extrahieren: alle Tage der aktuellen Saison
     liste_aller_tage = alle_tage_pro_saison( list_tage, aktive_saison )
 # dann extrahieren von vergangenen und zukünftigen Aktionen (gemessen an der Startzeit des Switchers)    
-    list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, start_tag )
+# aber nur für dosen kleiner/gleich der anzahl konfigurierten dosen !
+    list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, start_tag , anz_dosen_config )
 
 # --  Zuerst die vergagenen Aktionen des Tages behandeln ---
 #     dies, falls der Switcher in Laufe des Tages gestartet wird  - damit Status der Dosen aktuell ist
@@ -1131,7 +1137,8 @@ def run_switchter():
     for aktion in list_aktionen_past:                   # liste der vergagnenen aktionen des tages
         dosennu = int(aktion[1])
         ein_aus = int(aktion[2])
-        dosen[dosennu-1].set_auto_virtuell(ein_aus)     #   <<<<--------------- schalte die Dose virtuell         uni2018    
+        if dosennu <= anz_dosen_config:
+            dosen[dosennu-1].set_auto_virtuell(ein_aus)     #   <<<<--------------- schalte die Dose virtuell         uni2018    
                                                         # bei Funkschaltung wollen wir nicht so lanke funken, bis alles abgearbeitet ist      
         status_anzactions+=1                            # increment anzahl getaner Aktionen                
 
@@ -1281,8 +1288,8 @@ def terminate(was):
         blink_thread.join()
     if was > 2:
 #           Dosen ausschalten
-        for i in range(anz_dosen):
-            dosen[i].set_manuell(0)
+        for dose in dosen:
+            dose.set_manuell(0)
         for i in range(len(dosen)):     # dosen zerstoeren
             del dosen[0]
             pass
@@ -1295,6 +1302,7 @@ def terminate(was):
         del my_wetter
         
     if reboot_verlangt == 1:
+        sleep(2)                        # damit swserver noch Antwort geben kann
         mypri.myprint (DEBUG_LEVEL0,   "switcher2 terminating mit reboot pi")
         os.system('sudo shutdown -r now')
     else:
