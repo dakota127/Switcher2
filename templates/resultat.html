@@ -15,9 +15,9 @@
 
     </br>
     </br>
-  <p class=red>  Ausgeführt, Returncode: {{returncode}}</>
-    
-  <p class=red>{{textfeld}} </p>
+  <p class=red> {{textfeld_1}}</>  
+  <p class=red>{{textfeld_2}} </p>
+ 
       
 <form id="my-form" method="post" action="{{ url_for('home') }}">
 
@@ -25,11 +25,16 @@
  
 </form>
  
+  {% if show_reboot == True %}
+    
+   <p class=red> {{textfeld_3}} </p>
  <form id="my-form" method="post" action="{{ url_for('reboot') }}">
 
      <input class="button" name="anzdosen" type="submit" value="Reboot Pi"></span><br />  
  
-</form>     
+</form>   
+
+    {% endif %}  
    </div>   
 {% endblock %}
 </html>

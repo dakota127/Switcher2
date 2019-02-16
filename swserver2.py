@@ -33,6 +33,7 @@ import sys
 from sys import version_info
 import argparse
 import subprocess
+import threading
 
 DEBUG_LEVEL0=0
 DEBUG_LEVEL1=1
@@ -62,6 +63,12 @@ info_fuer_webserver = []
                                     # index 2-9: for future use
 anzdosn_gemeldet = 0;
 wetter_konfiguriert = 0;
+reboot_thread = 0
+reboot_verlangt = False
+bootmsg     = "Log prüfen und ev. Reboot Pi machen..."
+bootmsg_2   = "Pi wird neu gebootet, bitte warten"
+returntext_1 = "Ausgeführt, Returncode : "
+returntext_2 = "Returncode : "
 
 #  liste der html files: für Auswahl der Anzahl konfigurierten Dosen
 select_anzdosen_htmlfiles = [
@@ -108,11 +115,25 @@ def argu():
 
     return(args)
 
+# ***** Function reboot läuft als Thread **************************
+def reboot_function():  #   --> in eigenem Thread !!
+
+    while True:
+        if reboot_verlangt:
+            mypri.myprint (DEBUG_LEVEL0,   "swserver2 terminating mit reboot pi")
+            sleep(3)
+            os.system('sudo shutdown -r now')        
+        else:      
+            sleep(2)     
+          
+    
+    
 #--------------------------------------------
 def setup_server():
     global mypri, ipc_data, pfad
     error=0
     
+    reboot_verlangt = False           # reboot noch nicht verlangt
     signal.signal(signal.SIGTERM, sigterm_handler)  # setup Signal Handler for Term Signal
     pfad=os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script läuft
     mypri=MyPrint("swserver2","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
@@ -134,6 +155,17 @@ def setup_server():
     except:
         ipc_data= "tcp://localhost:5555"
 
+
+# aufsetzen und starten des reboot threads
+
+    reboot_thread = threading.Thread(target=reboot_function)
+    reboot_thread.setDaemon (True)                      # damit thread beendet wird, wenn main thread endet
+    reboot_thread.start()
+  
+    count_thread = threading.active_count()
+    thread_list = threading.enumerate()
+        
+    mypri.myprint (DEBUG_LEVEL1,"Anzahl Threads: {},  List: {}".format(count_thread,thread_list))
     mypri.myprint (DEBUG_LEVEL0, "--> swserver2.py gestartet, ipc_endpoint:{}".format(ipc_data))
     mypri.myprint (DEBUG_LEVEL1, "swserver2.py setup Server done")
     return(error);
@@ -201,7 +233,7 @@ def togggle_zuhause():
     retcode=ipc_instance.ipc_exchange(message) 
     if retcode[0] == 9:                        # server antwortet nicht
         retco.append(9)
-        retco.append("Switcher antwortet leider nicht...")
+        retco.append("Keine Antwort von Switcher erhalten...")
         
         del ipc       #  lösche Instanz von IPC_Client
 
@@ -243,7 +275,7 @@ def reset_manuell(how):
     retcode=ipc_instance.ipc_exchange(message) 
     if retcode[0] == 9:                        # server antwortet nicht
         retco.append(9)
-        retco.append("Switcher antwortet leider nicht...")
+        retco.append("Keine Antwort von Switcher erhalten...")
         
         del ipc       #  lösche Instanz von IPC_Client
 
@@ -277,7 +309,7 @@ def set_anzdosen (anzahl):
     retcode=ipc_instance.ipc_exchange(message) 
     if retcode[0] == 9:                        # server antwortet nicht
         retco.append(9)
-        retco.append("Switcher antwortet leider nicht...")
+        retco.append("Keine Antwort von Switcher erhalten...")
         
         del ipc       #  lösche Instanz von IPC_Client
 
@@ -340,7 +372,7 @@ def dose_behandeln(dos,was):
     retcode=ipc_instance.ipc_exchange(message) 
     if retcode[0] == 9:                        # server antwortet nicht
         retco.append(9)
-        retco.append("Switcher antwortet leider nicht...")
+        retco.append("Keine Antwort von Pi erhalten...")
         
         del ipc       #  lösche Instanz von IPC_Client
 
@@ -380,7 +412,7 @@ def get_status(status_art):
     retcode=ipc_instance.ipc_exchange(message) 
     if retcode[0] == 9:                        # server antwortet nicht
         retco.append(9)
-        retco.append("Switcher antwortet leider nicht...")
+        retco.append("Keine Antwort von Switcher erhalten...")
         del ipc_instance
 
         return(retco)     
@@ -453,24 +485,28 @@ def get_status(status_art):
 @app.route('/')
 def home (name = None):
     stat_list = []
-    dosen = 3
+    
+    mypri.myprint (DEBUG_LEVEL1, "app.route /index called")   
+
                           #  ruft  get_status(1) auf und setzt den returnwert in die variable statklein
     ret = get_status(1)     # verlange kurzen status
     mypri.myprint (DEBUG_LEVEL2, "get_status(1) bringt returncode: {}".format(ret))
+    
     if ret[0] == 0:
 
         for i in range(len(ret[1])):
             stat_list.append("{:<19} {:>18}".format(ret[1][i][0]  + ": " ,ret[1][i][1] ))
 
      #   ret[1]=["aa","vv"]
-        print ("---- dosen: {}". format(dosen))
+
         mypri.myprint (DEBUG_LEVEL1, "going to render index.html")      
         return render_template('index.html', statklein = stat_list, html_file2 = select_dosenschalt_htmlfiles [anzdosn_gemeldet])
+
     else:
         # switcher gibt Fehlerzurück oder reagiert nicht
-        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")      
+        mypri.myprint (DEBUG_LEVEL1, "going to render resultat.html (1)")      
 
-        return render_template('other.html', name = ret[1])
+    return render_template('resultat.html', show_reboot = True, textfeld_1 = returntext_2 + "9", textfeld_2 = ret[1], textfeld_3 = bootmsg)
         
 #----------------------------------------------
 # Callback für status.html   (voller Status)        
@@ -483,6 +519,7 @@ def status(name=None):
                             #  ruft  get_status(2) auf und setzt den returnwert in die variable name
     ret=get_status(2)     # verlange kurzen status
     mypri.myprint (DEBUG_LEVEL2, "get_status(2) bringt returncode: {}".format(ret))
+    
     if ret[0]==0:
         for i in range(len(ret[1])):
  #           print (ret[1][i][0])
@@ -496,9 +533,9 @@ def status(name=None):
         return render_template('status.html', name=stat_list, html_file = select_anzdosen_htmlfiles[anzdosn_gemeldet])
     else:
         # switcher gibt Fehlerzurück oder reagiert nicht
-        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")      
+        mypri.myprint (DEBUG_LEVEL1, "going to render resultat.html (1)")      
 
-        return render_template('other.html', name=ret[1])
+        return render_template('resultat.html', show_reboot = True, textfeld_1 = returntext_2 + "9", textfeld_2 = ret[1], textfeld_3 = bootmsg)
 
 #----------------------------------------------
 # Callback für about.html     
@@ -520,8 +557,23 @@ def log():
     zeilenlist = do_getlog()
     mypri.myprint (DEBUG_LEVEL1, "going to render swlog.html")      
 
-    return render_template('swlog.html',logzeilen = zeilenlist)
+    return render_template('swlog.html',logzeilen = zeilenlist, show_reboot = True, textfeld_1 = bootmsg)
 
+#----------------------------------------------
+# Callback für reboot     
+#--------------------------------------------
+@app.route('/reboot.html', methods=['GET', 'POST'])
+def reboot():
+    global reboot_verlangt
+    
+    mypri.myprint (DEBUG_LEVEL1, "app.route /reboot called")     
+
+   # hier reboot thread benachrichtigen
+    reboot_verlangt = True
+    
+    mypri.myprint (DEBUG_LEVEL1, "going to render resultat.html (3)")    
+                         # resultat.html ausgeben mit Angabe der gemachten Aktion
+    return render_template('resultat.html', show_reboot = False, textfeld_1 = "", textfeld_2 = bootmsg_2)
 #----------------------------------------------
 # Callback für wetter.html   (Wetterdaten)        
 #--------------------------------------------
@@ -558,15 +610,15 @@ def wetter(name=None):
 
 #----------------------------------------------
 # Callback für manuelles schalten, kommt von Form zurück     
-@app.route('/ackno', methods=['GET', 'POST'])
-def ackno():
+@app.route('/do_command', methods=['GET', 'POST'])
+def do_command():
     error0=False 
     error1=False 
     error2=False 
     error3=False
     ret=[0,0]
  
-    mypri.myprint (DEBUG_LEVEL1, "app.route /ackno called")     
+    mypri.myprint (DEBUG_LEVEL1, "app.route /do_command called")     
 #  die verschiedenen input felder untersuchen, schauen, was gekommen ist.   
 #
 #   zuerst umschaltung zuhase prüfen
@@ -604,12 +656,12 @@ def ackno():
 #  Nun Kombinationen prüfen 
     if error0 and error1 and error2 and error3  :
         ret[1]="nichts eingegeben"
-        return render_template('other.html', name=ret[1])
-    
+   
+        return render_template('resultat.html',  show_reboot = False, textfeld_1 = "Eingabefehler", textfeld_2 = ret[1], textfeld_3 = "")      
     if error3:
         if (error1 and not error2) or (error2 and not error1):
             ret[1]="Dose oder Aktion falsch"
-            return render_template('other.html', name=ret[1])
+            return render_template('resultat.html',  show_reboot = False, textfeld_1 = "Eingabefehler", textfeld_2 = ret[1], textfeld_3 = "")      
           
          
           
@@ -621,13 +673,17 @@ def ackno():
     #   nun antwort behandeln 
         ret=dose_behandeln(dose,aktion)  #       kurzer oder langer Status erstellen
 
-    mypri.myprint (DEBUG_LEVEL1, "going to render ackno.html")    
-    if ret[0]==0:                       # Ackno.html ausgeben mit Angabe der gemachten Aktion
-        return render_template('ackno.html', returncode=ret[0], textfeld = ret[1])
-    else:
-        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")        
-        # switcher gibt Fehlerzurück oder reagiert nicht
-        return render_template('other.html', name=ret[1])
+    mypri.myprint (DEBUG_LEVEL1, "going to render resultat.html (4)")    
+
+    if ret[0]==0:   
+        textfeld_1 =   returntext_1 + str(ret[0])     # resultat.html ausgeben mit Angabe der gemachten Aktion
+        boot = False 
+    else: 
+        textfeld_1 = ""
+        boot = True
+    return render_template('resultat.html',  show_reboot = boot, textfeld_1 = "", textfeld_2 = ret[1], textfeld_3 = bootmsg)      
+
+   
     
  #----------------------------------------------
 # Callback für manuelles schalten, kommt von Form zurück     
@@ -654,15 +710,15 @@ def set_dosen():
         mypri.myprint (DEBUG_LEVEL1, "Input check: anzahl_dosen nichts gekommen")
         ret[0] = 9
  
-    mypri.myprint (DEBUG_LEVEL1, "going to render ackno.html")    
-    if ret[0]==0:                       # Ackno.html ausgeben mit Angabe der gemachten Aktion
-        return render_template('ackno.html', returncode=ret[0], textfeld = ret[1])
-    else:
-        mypri.myprint (DEBUG_LEVEL1, "going to render other.html")       
-        # switcher gibt Fehlerzurück oder reagiert nicht
-        return render_template('other.html', name=ret[1])
+    mypri.myprint (DEBUG_LEVEL1, "going to render resultat.html (5)")    
     
-       
+    if ret[0]==0:   
+        textfeld_1 =   returntext_1 + str(ret[0])     # resultat.html ausgeben mit Angabe der gemachten Aktion
+        boot = False 
+    else: 
+        textfeld_1 = ""
+        boot = True
+    return render_template('resultat.html',  show_reboot = boot, textfeld_1 = "", textfeld_2 = ret[1], textfeld_3 = bootmsg)      
 
 #----------------------------------------------
 # Programm startet hier....
