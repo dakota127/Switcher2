@@ -461,31 +461,30 @@ def status_erstellen(was):
 #   Zuerst die List abfuellen und diese vor dem Senden in ein JSON wandeln
 #
 #
- 
+        stat_klein = status_klein.copy()        # wir müssen kopie machen, da wir später ev. 4 Elemente abschneiden
         # index 0 ist bereits gefüllt mit defaultwert, siehe swdefstatus.py
-        status_klein[0][1][1] = info_fuer_webserver[0]     
-        status_klein[0][2][1] = info_fuer_webserver[1]         
-        status_klein[0][3][1] = info_fuer_webserver[2]       
-        status_klein[0][4][1] = info_fuer_webserver[3]     
+        # wir arbeiten mit der Kopie !
+        stat_klein[0][1][1] = info_fuer_webserver[0]     
+        stat_klein[0][2][1] = info_fuer_webserver[1]         
+        stat_klein[0][3][1] = info_fuer_webserver[2]       
+        stat_klein[0][4][1] = info_fuer_webserver[3]     
           
-        status_klein[1][1] = status[3:]          # Version
-        status_klein[2][1] = status_nextaction[1]         # Naechste Aktion 
-        status_klein[3][1] = sais[aktive_saison][4]   # ControlfileID
-        status_klein[4][1] = daheim                     # zuhause / nicht zuhause
+        stat_klein[1][1] = status[3:]          # Version
+        stat_klein[2][1] = status_nextaction[1]         # Naechste Aktion 
+        stat_klein[3][1] = sais[aktive_saison][4]   # ControlfileID
+        stat_klein[4][1] = daheim                     # zuhause / nicht zuhause
 
         if wetter_behandeln == 1:
             int,out = my_wetter.get_wetter_data_part()      # wetter data holen
-            status_klein[5][1] = int                     # indoor data
-            status_klein[6][1] = out                     # outdoor data  
- 
-        
-#        else:                                       # wir senden keine wetterdaten wenn wetter nicht konfiguriert
-#            stat_klein.pop()                        # hinterstes Element der Liste weg
-#            stat_klein.pop()                        # hinterstes Element der Liste weg
-        mypri.myprint (DEBUG_LEVEL2,  "status_klein erstellen: {}".format(status_klein))
+            stat_klein[5][1] = int                     # indoor data
+            stat_klein[6][1] = out                     # outdoor data  
+        else:                                       # wir senden keine wetterdaten wenn wetter nicht konfiguriert
+            stat_klein.pop()                        # hinterstes Element der Liste weg
+            stat_klein.pop()                        # hinterstes Element der Liste weg
+        mypri.myprint (DEBUG_LEVEL2,  "status_klein erstellen: {}".format(stat_klein))
   
         
-        stat_k = json.dumps(status_klein)           # umwandeln in JSON Object (also ein String)
+        stat_k = json.dumps(stat_klein)           # umwandeln in JSON Object (also ein String)
         return("stad" + stat_k)       # Meldungs-ID vorne anhaengen (Statusmeldung)
                                                     # und fertig
 
