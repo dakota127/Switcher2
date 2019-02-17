@@ -1237,7 +1237,7 @@ def run_switchter():
                 if aktive_saison != aktive_saison_old:
                     liste_aller_tage = alle_tage_pro_saison( list_tage, aktive_saison )   # liste neu erstellen (neue saison)             
                         
-                list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, wochentag )
+                list_aktionen_past, list_aktionen_zukunft = aktionen_pro_tag (liste_aller_tage, wochentag ,anz_dosen_config)
                 status_anzactions = 0                       # anzahl getaner Aktionen pro Tag
                                        
                                                             # manuell im configfile: 0= forever, 1=nur bis Mitternacht)                                          
