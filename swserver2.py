@@ -66,7 +66,8 @@ anzdosn_gemeldet = 0;
 wetter_konfiguriert = 0;
 reboot_thread = 0
 reboot_verlangt = False
-bootmsg     = "Nochmals probieren, Log prüfen und ev. Reboot Pi machen..."
+bootmsg     = "Nochmals probieren, Log prüfen und ev. Reboot Switcher 2 machen..."
+bootmsg_1     = "Reboot Switcher 2, danach bitte warten..."
 bootmsg_2   = "Pi wird neu gebootet, bitte warten"
 returntext_1 = "Ausgeführt, Returncode : "
 returntext_2 = "Returncode : "
@@ -577,7 +578,7 @@ def log():
     zeilenlist = do_getlog()
     mypri.myprint (DEBUG_LEVEL1, "going to render swlog.html")      
 
-    return render_template('swlog.html',logzeilen = zeilenlist, show_reboot = True, textfeld_1 = bootmsg)
+    return render_template('swlog.html',logzeilen = zeilenlist, show_reboot = True, textfeld_1 = bootmsg_1)
 
 #----------------------------------------------
 # Callback für reboot     
