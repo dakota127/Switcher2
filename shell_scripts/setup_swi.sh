@@ -51,8 +51,12 @@ chmod 755 /etc/init.d/swserver2.sh
 update-rc.d switcher2.sh defaults
 update-rc.d swserver2.sh defaults
 
+echo "entferne .git Ordner"
+rm -rf .git
+
 #
-echo "Files fuer switcher gemacht"
+
+echo "Setup fuer switcher2 gemacht"
 
 
 
