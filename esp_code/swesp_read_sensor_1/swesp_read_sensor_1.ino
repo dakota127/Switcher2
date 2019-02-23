@@ -45,18 +45,18 @@
 // defines für verschiedene Programm-Varianten
 //
 //*************************************************
-#define TEST     // uncomment für Testumgebung
+//#define TEST     // uncomment für Testumgebung
 //*************************************************
 //
 //
 #if defined TEST
 #define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
 // Time to deepsleep (in seconds):
-const int sleepTimeS = 30;        // 30 ist etwa 30 Sec 
+const int sleepTimeS = 60;        // 60 ist etwa 1 min 
 #else
 #define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
 // Time to deepsleep (in seconds):
-const int sleepTimeS = 2000;        // 2000 ist etwa 33 Minuten
+const int sleepTimeS = 2000;        // 2000 ist etwa 30 Minuten
 #endif
 
 
@@ -156,6 +156,7 @@ String    last_will_msg = "Verbindung verloren zu Sensor: ";
 String    the_sketchname;
 unsigned long currentMillis;
 bool      mqtt_status;
+#define LED 2 //Define blinking LED pin
   
 // The ESP8266 RTC memory is arranged into blocks of 4 bytes. The access methods read and write 4 bytes at a time,
 // so the RTC data structure should be padded to a 4-byte multiple.
@@ -178,7 +179,7 @@ void readSensor ();                 // read sensor
 void waitForWifi();                 // wait for Wifi
 void setup_wifi();                  // setup wifi
 void mqtt_connect();                // connevt mqtt
-
+int getBootDevice();
 
 //-------- Functions ----------------------------------------
 // -------------------------------------
@@ -192,6 +193,31 @@ void setup() {
    
    start_time_ms = millis();   // Loop Begin Zeit
 
+  Serial.begin(115200);
+  while (!Serial) { }
+  DEBUGPRINTLN0 ("Starting Setup --------"); 
+  display_Running_Sketch();
+  
+// dies von hier:
+// https://www.sigmdel.ca/michel/program/esp8266/arduino/watchdogs2_en.html
+//
+  if ( getBootDevice() == 1 ) {
+    
+    Serial.println("\nWARNING");
+    Serial.println("This sketch has just been uploaded over the UART.");
+    Serial.println("The ESP8266 will freeze on the first restart.");
+    Serial.println("Press the reset button or power cycle the ESP now");
+    Serial.println("and operation will be resumed thereafter.");
+    while (1) {
+        pinMode(LED, OUTPUT); // Initialize the LED pin as an output
+        digitalWrite(LED, LOW); // Turn the LED on (Note that LOW is the voltage level)
+        delay(500); // Wait for half a second
+        yield();
+        digitalWrite(LED, HIGH); // Turn the LED off by making the voltage HIGH
+        delay(500); // Wait for half a second
+        yield();
+      }
+    }  
 /*
   Use watchdog timers.
   Set a timer for the maximum amount of time your polling loop should run.
@@ -199,7 +225,7 @@ void setup() {
   radio on trying to associte if your AP is down, for example. 
   The ESP8266 has a built-in Ticker that takes a timeout and a callback.
 */
-  sleepTicker.once_ms (TICKER_TIME_MS, &watchdog_sketch);
+  sleepTicker.attach_ms (TICKER_TIME_MS, &watchdog_sketch);
 
 // folgender Code thanks to Michel Deslierres
 // https://www.sigmdel.ca/michel/program/esp8266/arduino/watchdogs_en.html
@@ -213,7 +239,8 @@ void setup() {
       
     case REASON_WDT_RST:
       // do something at hardware watch dog reset
-      strcpy_P(message, PSTR("Hardware Watchdog"));     
+      strcpy_P(message, PSTR("Hardware Watchdog")); 
+      
       break;
       
     case REASON_EXCEPTION_RST:
@@ -248,10 +275,7 @@ void setup() {
       break;
   }
   
-  Serial.begin(115200);
-  while (!Serial) { }
-  DEBUGPRINTLN0 ("Starting Setup --------"); 
-  display_Running_Sketch();
+ 
 
 #if defined TEST
   DEBUGPRINTLN1 ("TEST ist gesetzt <------------");
@@ -482,6 +506,7 @@ void deepsleep() {
   DEBUGPRINT1 (String(sleepTimeS));
   DEBUGPRINTLN1 (" seconds");
 
+  sleepTicker.detach(); 
  
   ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
   // It can take a while for the ESP to actually go to sleep.
@@ -707,6 +732,21 @@ void mqtt_connect() {
 }
 
     }//end mqtt_connect()
+
+
+// ----------------------------------------------
+int getBootDevice(void) {
+  int bootmode;
+  asm (
+    "movi %0, 0x60000200\n\t"
+    "l32i %0, %0, 0x118\n\t"
+    : "+r" (bootmode) /* Output */
+    : /* Inputs (none) */                
+    : "memory" /* Clobbered */           
+  );
+  return ((bootmode >> 0x10) & 0x7); 
+}
+    
 //------------------------------------------------
 
 /*
