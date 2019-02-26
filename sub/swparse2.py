@@ -66,7 +66,7 @@ class ActionParser(MyPrint):
         self.Weekdays={0: "Sonntag", 1:"Montag", 2: "Dienstag",3: "Mittwoch",4: "Donnerstag",5: "Freitag", 6: "Samstag"}
         self.onoff={1:'ON', 0:'OFF'}
         self.maxlen=90
-        self.maxdose=4
+        self.maxdose=8                  # Platz für maximal 8 Dosen 
         self.maxday=7
         self.season=0
         self.woche2=list()  
@@ -401,15 +401,14 @@ class ActionParser(MyPrint):
 
     
     #  Folgende liste woche2 nur für die grafische Darstellung der Schaltzeiten   
-    #  dies sind die Zeilen: für jeden der 7 Wochentage 4 Zeilen (für die 4 Dosen)  
-        self.woche2=[    [[],[],[],[]], \
-                [[],[],[],[]], \
-                [[],[],[],[]], \
-                [[],[],[],[]], \
-                [[],[],[],[]], \
-                [[],[],[],[]], \
-                [[],[],[],[]] \
-            ]
+    #  dies sind die Zeilen: für jeden der 7 Wochentage 8 Zeilen (für die maximal 8 Dosen)  
+            
+        self.woche2 = [
+            [ [] for z in range (self.maxdose)] for z in range (7)
+        
+            ]   
+   
+       
     #  alle Zellen init mit "-"
         for z in range (self.maxday):            # init alle Zeilen für alle Tage mit '-'
             for i in range (self.maxdose):
@@ -441,8 +440,9 @@ class ActionParser(MyPrint):
     #
         print ( "Liste 2: Aktionen pro Dose ----------------------\n")
         
+      
         tag_dose_liste = self.alle_tage_pro_saison(li_dose,season_in )    # extrakt liste alle Tage der gegebenen saison
-        
+     
         for workday, tag in enumerate (tag_dose_liste):             # loop über alle Tage
             print (  "---- %s  ----------------" % self.Weekdays [workday] )
             for dosennummer, dose in enumerate(tag):                # loop ueber alle dosen des tages
@@ -688,7 +688,7 @@ class ActionParser(MyPrint):
         self.myprint (DEBUG_LEVEL2, "\nAnzahl Dosen gefunden: {}".format(len(dosen)))
         self.myprint (DEBUG_LEVEL2, "Anzahl Sequenzen gefunden: {}".format(s))
         self.myprint (DEBUG_LEVEL2, "ActionParser Done Parsing Inputfile")
-    
+        self.maxdose = len(dosen)               # uebernehme dies für printout anzahl dosen
         return(ret)
 # *************************************************
 
