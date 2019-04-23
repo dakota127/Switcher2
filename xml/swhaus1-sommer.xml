@@ -17,7 +17,7 @@
 
 <aktionen saison = "Sommersaison">
 <file_id>Sommer 4D Prisca</file_id>
-<from_date>01.April</from_date>
+<from_date>20.April</from_date>
 <to_date>18.September</to_date>
 
 <!--
@@ -33,7 +33,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.30</OFF>
   </sequence>
   <sequence>
-  	<ON>20.20</ON>
+  	<ON>20.45</ON>
   	<OFF>23.55</OFF>
   </sequence>
   </tag>
@@ -44,14 +44,14 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.25</OFF>
   </sequence>
  <sequence>
-  	<ON>21.05</ON>
+  	<ON>20.45</ON>
   	<OFF>23.50</OFF>
   </sequence>
   </tag>
   
 <tag nummer = "2"> 
    <sequence>
-  	<ON>20.25</ON>
+  	<ON>20.45</ON>
   	<OFF>23.42</OFF>
   </sequence>  
   </tag>
@@ -62,7 +62,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.22</OFF>
   </sequence>
  <sequence>
-  	<ON>20.20</ON>
+  	<ON>20.45</ON>
   	<OFF>23.55</OFF>
   </sequence>
    </tag>
@@ -73,7 +73,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.22</OFF>
   </sequence>
  <sequence>
-  	<ON>20.54</ON>
+  	<ON>20.45</ON>
   	<OFF>23.45</OFF>
   </sequence>
  
@@ -85,7 +85,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.17</OFF>
   </sequence>
  <sequence>
-  	<ON>20.30</ON>
+  	<ON>20.45</ON>
   	<OFF>23.55</OFF>
   </sequence>
  
@@ -96,7 +96,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.22</OFF>
   </sequence>
  <sequence>
-  	<ON>20.25</ON>
+  	<ON>20.45</ON>
   	<OFF>23.55</OFF>
   </sequence>
 
