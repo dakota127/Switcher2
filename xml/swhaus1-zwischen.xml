@@ -31,7 +31,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>19.00</ON>
+  	<ON>19.15</ON>
   	<OFF>23.40</OFF>
   </sequence>
   </tag>
@@ -82,8 +82,8 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>19.15</ON>
-  	<OFF>23.40</OFF>
+  	<ON>19.05</ON>
+  	<OFF>23.20</OFF>
   </sequence>
   </tag>
   
@@ -93,7 +93,7 @@ Dose Nummer 1  Wohnzimmer***************************** Dose 1
   	<OFF>00.55</OFF>
   </sequence>
   <sequence>
-  	<ON>19.10</ON>
+  	<ON>18.55</ON>
   	<OFF>23.40</OFF>
   </sequence>
   </tag>
