@@ -1,9 +1,18 @@
 #!/usr/bin/python
 # coding: utf-8
 # ***********************************************************
-#   Testscript MyPrint
+#   Testscript for class MyPrint
+#   This program is using the class MyPrint
+# 
+#   It demonstrates how to replace the commonly used print() statement
+#   with something much more elaborate.
+#   Depending on the DEBUG_LEVEL set through a commandline argument
+#   more or less debug output is written to the screen and AT THE SAME Time
+#   written to log file.
+#   The name of the log files can be specified when an instance of the
+#   MyPrint calss is instantieted.
 #
-#   es wird in File printest.log  geschrieben
+#   The logfile is an Rotating File with max three files. 
 # ***** Imports ******************************
 import os, sys
 import argparse
@@ -29,23 +38,21 @@ def argu():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-d", help="kleiner debug", action='store_true')
-    parser.add_argument("-D", help="grosser debug", action='store_true')
-    parser.add_argument("-A", help="ganz grosser debug", action='store_true')
-
+                                                                             # kein Parm  only see DEBUG_LEVEL0                  
+    parser.add_argument("-d", help="minimal debug", action='store_true')      # see also DEBUG_LEVEL1
+    parser.add_argument("-D", help="more debug ", action='store_true')        # see also DEBUG_LEVEL2 
+    parser.add_argument("-A", help="even more debug", action='store_true')    # see also DEBUG_LEVEL3 
+                                                              
 
     args = parser.parse_args()
-#    print (args.d, args.s, args.dein, args.daus, args.dnor, args.dexc, args.dinc)          # initial debug
-#    if args.s:
-#        print ("s war hier")
+
     if args.d:
         debug=DEBUG_LEVEL1
     if args.D: 
         debug=DEBUG_LEVEL2
     if args.A: 
         debug=DEBUG_LEVEL3
-       
-       
+        
     return(args)
     
 #----------------------------------------------
@@ -57,12 +64,14 @@ def argu():
 
 if __name__ == '__main__':
 #
-    nummer=[2,3]                # zum testen
+    nummer=[2,3]                # for testen
     options=argu()              # get commandline args 
     
-    mypri=MyPrint("printest_1","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
-    mypri.myprint(DEBUG_LEVEL0, "Start printest_2")
-
+    mypri=MyPrint("printest_2","../printest.log",debug)     # Instanz von MyPrint Class erstellen
+                                                            # provide app_name and logfilename
+    mypri.myprint(DEBUG_LEVEL0, "Start program printest")
+    mypri.myprint(DEBUG_LEVEL1, "another log_entry")
+    mypri.myprint(DEBUG_LEVEL1, "yet another logentry")
 
     try:                                                       # übergebe appname und logfilename
         mypri.myprint (DEBUG_LEVEL1, "working")
@@ -70,10 +79,10 @@ if __name__ == '__main__':
         mypri.myprint (DEBUG_LEVEL3, "terribly hard working")
         pass
  #       qw=zuu
-        nummer[4]=23            # sollte Fehler geben exception (hier umlauf für Test éàü)
+        nummer[4]=23            # this is to create a serious error within Python 
     except Exception:
-        print ("exception !!!")
-        mypri.myprint_exc ("Etwas Schlimmes ist passiert.... !")
+                   
+        mypri.myprint_exc ("Something bad happened.... !")
     finally:
         mypri.myprint (DEBUG_LEVEL1, "finally reached")
         

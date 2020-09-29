@@ -1,24 +1,33 @@
 #!/usr/bin/python
 # coding: utf-8
 # ***********************************************************
-#   Testscript MyPrint
+#   Testscript for class MyPrint
+#   This program is using the class MyPrint
+# 
+#   It demonstrates how to replace the commonly used print() statement
+#   with something much more elaborate.
+#   Depending on the DEBUG_LEVEL set through a commandline argument
+#   more or less debug output is written to the screen and AT THE SAME Time
+#   written to log file.
+#   The name of the log files can be specified when an instance of the
+#   MyPrint calss is instantieted.
 #
-#   es wird in File printest.log  geschrieben
+#   The logfile is an Rotating File with max three files. 
 # ***** Imports ******************************
 import sys, getopt, os
 import time
 import argparse
 
-import socket
+import socket               # just for testing
 
-from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
+from sub.myprint import MyPrint              # Class MyPrint for printing an logging printing
 
 # ***** Variables *****************************
 
-DEBUG_LEVEL0=0
-DEBUG_LEVEL1=1
-DEBUG_LEVEL2=2
-DEBUG_LEVEL3=3
+DEBUG_LEVEL0 = 0
+DEBUG_LEVEL1 = 1
+DEBUG_LEVEL2 = 2
+DEBUG_LEVEL3 = 3
 
 debug=DEBUG_LEVEL0
 
@@ -31,10 +40,10 @@ def argu():
     global debug
 
     parser = argparse.ArgumentParser()
-                                                          #       kein Parm       will DEBUG_LEVEL0 sehen (sehr wichtig)                   
-    parser.add_argument("-d", help="kleiner debug", action='store_true')        # will DEBUG_LEVEL1 sehen
-    parser.add_argument("-D", help="grosser debug", action='store_true')        # will DEBUG_LEVEL2 sehen
-    parser.add_argument("-A", help="ganz grosser debug", action='store_true')   # will DEBUG_LEVEL3 sehen
+                                                                             # kein Parm  only see DEBUG_LEVEL0                  
+    parser.add_argument("-d", help="minimal debug", action='store_true')      # see also DEBUG_LEVEL1
+    parser.add_argument("-D", help="more debug ", action='store_true')        # see also DEBUG_LEVEL2 
+    parser.add_argument("-A", help="even more debug", action='store_true')    # see also DEBUG_LEVEL3 
                                                               
     args = parser.parse_args()
 #    print (args.d, args.s, args.dein, args.daus, args.dnor, args.dexc, args.dinc)          # initial debug
@@ -51,7 +60,6 @@ def argu():
     
 	
 # ***********************************************
-
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,17 +79,22 @@ def get_ip():
 def test_print():
     global debug
     
-    mypr.myprint(DEBUG_LEVEL0,"---> Debug-Level ist auf {} gesetzt".format( debug))
+    
+ # first try: debug level set to zero   
+    mypr.myprint(DEBUG_LEVEL0,"---> Debug-Level is set to {}".format( debug))
   
-    mypr.myprint(DEBUG_LEVEL0, "Debug-Output Level {} öéü sehr wichtig ".format(DEBUG_LEVEL0))    # unwichtig
-    mypr.myprint(DEBUG_LEVEL1, "Debug-Output Level {} wichtig".format(DEBUG_LEVEL1))    # weniger wichtig
-    mypr.myprint(DEBUG_LEVEL2, "Debug-Output Level {} weniger wichtig".format(DEBUG_LEVEL2))    # wichtig
-    mypr.myprint(DEBUG_LEVEL3, "Debug-Output Level {} unwichtig".format( DEBUG_LEVEL3))    # sehr wichtig
-
-
+    mypr.myprint(DEBUG_LEVEL0, "Debug-Output Level {} very important".format(DEBUG_LEVEL0))    # unwichtig
+    mypr.myprint(DEBUG_LEVEL1, "Debug-Output Level {} important".format(DEBUG_LEVEL1))    # weniger wichtig
+    mypr.myprint(DEBUG_LEVEL2, "Debug-Output Level {} less important".format(DEBUG_LEVEL2))    # wichtig
+    mypr.myprint(DEBUG_LEVEL3, "Debug-Output Level {} not important".format( DEBUG_LEVEL3))    # sehr wichtig
+    
+    print (" ")         # do some newline stuff
+    print (" ")
+    print (" ")
+ # first try: debug level set to 2   execute the same statements
     debug=2
     mypr.set_debug_level (debug)
-    mypr.myprint(DEBUG_LEVEL0,"---> Debug-Level ist auf {} gesetzt".format( debug))
+    mypr.myprint(DEBUG_LEVEL0,"---> Debug-Level now set to {}".format( debug))
   
     mypr.myprint(DEBUG_LEVEL0, "Debug-Output Level {} sehr wichtig ".format(DEBUG_LEVEL0))    # unwichtig
     mypr.myprint(DEBUG_LEVEL1, "Debug-Output Level {} wichtig".format(DEBUG_LEVEL1))    # weniger wichtig
@@ -98,9 +111,9 @@ def test_print():
 
 if __name__ == '__main__':
 #
-    options=argu()        
+    options=argu()          # get commandline args  
 
-    mypr=MyPrint("printest_1","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
+    mypr=MyPrint("printest_1","../printest.log",debug)    # Instanz von MyPrint Class erstellen
 
     mypr.myprint(DEBUG_LEVEL3,"Start printest_1")
 
