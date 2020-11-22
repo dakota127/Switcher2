@@ -22,7 +22,7 @@
     Peter K. Boxler, September 2018
 /* --------------------------------------------------*/
 
-// #define ESP8266
+#define ESP8266
 
 /* select ESP8266 or ESP32 mittels define */
 
@@ -46,7 +46,7 @@ const int interruptPin = 0; //Flash button on board     für
 /* diese Werte anpassen   <<--------- */
 const char* ssid = "P-NETGEAR";           // WLAN SSID
 const char* password = "hermannelsa";    // WLAN Passwort
-const char* ip_adr_broker = "192.168.1.145";
+const char* ip_adr_broker = "192.168.1.153";
 const char* sub_topic1 = "cmnd/dose1/POWER";
 const char* sub_topic2 = "cmnd/dose2/POWER";
 const char* sub_topic3 = "cmnd/dose3/POWER";
@@ -371,4 +371,3 @@ void loop() {
 }
 
 /* ---------------------------------------------*/
-
