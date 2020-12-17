@@ -32,6 +32,9 @@ mosquitto_passwd -U /etc/mosquitto/my_passw.txt
 echo "mosquitto user config done"
 echo " "
 
+echo "mosquitto logfile permissions"
+echo " "
+sudo chmod 777 /var/log/mosquitto/mosquitto.log
 
 echo " "
 echo "copy scripts for switcher2"
