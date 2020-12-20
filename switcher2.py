@@ -906,11 +906,13 @@ def init_switcher(start):
             mqtt_setup = 1
             
             
-        if mqtt_setup == 1:            
+        if mqtt_setup == 1:   
+                       
 # Nun wissen wir, ob MQTT Connection nötig ist:
 # entweder weil Wetter konfiguriert ist oder weil mind. einen Dose Schaltart 3 hat.
             mypri.myprint (DEBUG_LEVEL1,"MQTT noetig oder verlangt: {}".format(JANEIN[mqtt_setup]))
-
+            mypri.myprint (DEBUG_LEVEL1,"Wait 5 sec. before attempting MQTT Connection")
+            sleep(5)
             mymqtt_client = MQTT_Conn (debug, path1, "switcher2" + hostname)            
             sleep(1)        # wir warten 1 sek und fragen dann nach
             ret = mymqtt_client.get_status() 
