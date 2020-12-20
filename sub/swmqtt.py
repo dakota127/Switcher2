@@ -160,7 +160,8 @@ class MQTT_Conn(MyPrint):
             if self.connect_flag:
                 break        #wait in loop
             else:
-                sleep(1)
+                self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, try agin in 2 sec.")            
+                sleep(2)
         if not self.connect_flag:
             self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, laeuft mosquitto broker ?")
             self.myprint (DEBUG_LEVEL0, "mqtt_conn: MQTT Connect failed, user-id/passwort richtig ?")
