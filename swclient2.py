@@ -25,7 +25,7 @@ from sys import version_info
 from sub.swcfg_switcher import cfglist_swi
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
 
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 
 
 SERVER_ENDPOINT = "tcp://localhost:5555"
@@ -96,9 +96,14 @@ slog=0
 ret=0
 debug=0
 ipc=0
+endpoint =""
 #
 config=0
 mypri=0
+progname = "swclient2"
+logfile_name = "switcher2.log"
+configfile_name = "swconfig.ini"
+printstring = "swclient2 : "
 
 
 #----------------------------------------------------------
@@ -136,17 +141,24 @@ def setup():
     global anz_commands
     global options
     global config, mypri
+    global logfile_name, configfile_name
   
     options=argu()                          # get commandline args
     pfad=os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script läuft
-
-    mypri=MyPrint("swclient2","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
+    logfile_name = pfad + logfile_name
+    
+# create Instance of MyPrint Class 
+    mypri = MyPrint(  appname = progname, 
+                    debug_level = debug,
+                    logfile =  logfile_name )     
+                    
                                                         # übergebe appname und logfilename
-    config=ConfigRead(debug)        # instanz der ConfigRead Class
+    config = ConfigRead(debug_level = debug)      # instanz der ConfigRead Class                         
 
     anz_commands=len (valid_commands)
-    config=ConfigRead(debug)        # instanz der ConfigRead Class
-    ret=config.config_read(pfad + "/swconfig.ini","switcher",cfglist_swi)
+    configfile_name = pfad +  "/" + configfile_name
+    
+    ret = config.config_read(configfile_name, "switcher",cfglist_swi)  # alese von abschnitt     
     if ret > 0:
         print("config_read hat retcode: {}".format (ret))
         sys.exit(2)
@@ -269,9 +281,11 @@ if __name__ == "__main__":
         sys.exit(2)
 
     setup()
-    u=cfglist_swi.index("ipc_endpoint_c") + 1           # wo kommt der gelieferte name vor (index)
 
-    ipc=IPC_Client(debug,REQUEST_TIMEOUT, cfglist_swi[u],REQUEST_RETRIES)
+    endpoint = cfglist_swi["ipc_endpoint_c"]    
+    
+    print (endpoint)  
+    ipc=IPC_Client(debug,REQUEST_TIMEOUT, endpoint ,REQUEST_RETRIES)
 
 
     # commandline -s verlangt eine Status-Abfrage, dann exit

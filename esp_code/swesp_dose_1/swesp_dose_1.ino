@@ -46,7 +46,8 @@ const int interruptPin = 0; //Flash button on board     für
 /* diese Werte anpassen   <<--------- */
 const char* ssid = "P-NETGEAR";           // WLAN SSID
 const char* password = "hermannelsa";    // WLAN Passwort
-const char* ip_adr_broker = "192.168.1.153";
+// const char* ip_adr_broker = "192.168.1.153";
+const char* ip_adr_broker = "192.168.1.121";
 const char* sub_topic1 = "cmnd/dose1/POWER";
 const char* sub_topic2 = "cmnd/dose2/POWER";
 const char* sub_topic3 = "cmnd/dose3/POWER";
@@ -151,9 +152,10 @@ void setup_wifi() {
   randomSeed(micros());
   Serial.println("");
   Serial.println("WiFi connected");
-  Serial.println("IP address: ");
+  Serial.print("My IP address: ");
   Serial.println(WiFi.localIP());
-   
+  Serial.print("Broker IP address: ");
+  Serial.println(ip_adr_broker); 
   Serial.println("Done Conneting to WiFi --------");
   
 }
@@ -307,6 +309,10 @@ void setup() {
   stat_pin2 = digitalRead(pin2);
   digitalWrite(led, LOW);         // led aus bei start
 
+    Serial.print ("Pin1: ");   Serial.println(stat_pin1);
+    Serial.print ("Pin2: ");   Serial.println(stat_pin2);
+     
+  delay(2000);
   attachInterrupt(digitalPinToInterrupt(interruptPin), handleInterrupt, FALLING);
 
   if (stat_pin1 == LOW and stat_pin2 == LOW)

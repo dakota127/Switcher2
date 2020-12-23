@@ -22,7 +22,7 @@ import time
 from time import sleep
 import RPi.GPIO as GPIO         #  Raspberry GPIO Pins
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 from sub.swcfg_switcher import cfglist_akt       # struktur des Aktors Config im Config File  
  
 DEBUG_LEVEL0=0                      
@@ -37,13 +37,13 @@ class Aktor_1 (MyPrint):
     ' klasse aktor '
     aktorzahler=0               # Class Variable
     
-    def __init__(self, dosennummer,debug_in , path_in):  # Init Funktion
+    def __init__(self, dosennummer,debug_in , config_filename_in):  # Init Funktion
         self.errorcode = 8
         self.nummer = Aktor_1.aktorzahler
         self.debug=debug_in
         self.dosennummer=dosennummer            # arbeite für diese Dose (1 bis n)
         self.Pins2=[]
-        self.path = path_in          # pfad  main switcher
+        self.config_file = config_filename_in          # pfad  main switcher
 
         GPIO.setmode (GPIO.BCM)
         rev=GPIO.RPI_REVISION
@@ -59,7 +59,9 @@ class Aktor_1 (MyPrint):
  # es müssen 5 Pins definiert werden, da maximal 5 Dosen vorkommen können
         
         config=ConfigRead(self.debug)        # instanz der ConfigRead Class
-        ret=config.config_read(self.path + "/swconfig.ini","aktor_1",cfglist_akt)
+        
+        ret = config.config_read(self.config_file,"aktor_1",cfglist_akt)
+##        ret=config.config_read(self.path + "/swconfig.ini","aktor_1",cfglist_akt)
         if ret > 0:
             self.myprint (DEBUG_LEVEL0, "config_read hat retcode: {}".format (ret))
             self.errorcode=99
@@ -68,20 +70,18 @@ class Aktor_1 (MyPrint):
         self.myprint (DEBUG_LEVEL3, "--> aktor_1 {} aktor_init : dose {} configfile read {}".format (self.nummer,self.dosennummer, cfglist_akt))
 
 #   GPIO Pin 1 holen
-        y=cfglist_akt.index("gpio_1")  + 1    # suche den Wert im Config-file
-        self.Pins2.append (int(cfglist_akt[y]))
+ 
+        self.Pins2.append (int(cfglist_akt["gpio_1"]))
 #   GPIO Pin 2 holen
-        y=cfglist_akt.index("gpio_2")  + 1    # suche den Wert im Config-file
-        self.Pins2.append (int(cfglist_akt[y]))
+
+        self.Pins2.append (int(cfglist_akt["gpio_2"]))
 #   GPIO Pin 3 holen
-        y=cfglist_akt.index("gpio_3")  + 1    # suche den Wert im Config-file
-        self.Pins2.append (int(cfglist_akt[y]))
+        self.Pins2.append (int(cfglist_akt["gpio_3"]))
 #   GPIO Pin 4 holen
-        y=cfglist_akt.index("gpio_4")  + 1    # suche den Wert im Config-file
-        self.Pins2.append (int(cfglist_akt[y]))
+        self.Pins2.append (int(cfglist_akt["gpio_4"]))
 #   GPIO Pin 5 holen
-        y=cfglist_akt.index("gpio_5")  + 1    # suche den Wert im Config-file
-        self.Pins2.append (int(cfglist_akt[y]))
+        self.Pins2.append (int(cfglist_akt["gpio_5"]))
+
 # nun wurde alle 5 Pins geholt, diese Instanz verwendet genau einen der Pins in der Liste Pins2
         self.mypin=self.Pins2[self.nummer]        # hole Pin NUmmer 
         GPIO.setup(self.mypin, GPIO.OUT)

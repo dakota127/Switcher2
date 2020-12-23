@@ -706,16 +706,16 @@ class ActionParser(MyPrint):
 # Einlesen und Parsen der Steuer-Files für alle ActionParser.saison_list             alles neu juni2018
 #-------------------------------------------------------   
 #    zuerst namen der Files aus dem Congi-File holen - die Werte stehen schon in values
-        v=values.index("xmlfile_prefix") + 1      # wo kommt der gelieferte name vor (index)
+        v = values["xmlfile_prefix"]      
 
         for i in range (3):      
-            u=values.index("saison_" + str(i+1)) + 1    # wir etablieren die Position der aktuellen saison
-                                                   
+            u = values["saison_" + str(i+1)]    # wir etablieren die Position der aktuellen saison
+            print (v,u)                              
 #  Lesen des xml Steuer-Files , Filename erstellen--------------    
-            xmlfile1=self.path + "/" + values[v].decode() + "-" + values[u].decode()
+            xmlfile1=self.path + "/" + v + "-" + u
  
             xmlfile1=xmlfile1 + ".xml" 
-            ActionParser.saison_list[i][0]=values[v].decode()          # Hautteil des Filenamens abfüllen in die Klassen Variable
+            ActionParser.saison_list[i][0]=v          # Hautteil des Filenamens abfüllen in die Klassen Variable
             
 #            ActionParser.saison_list[i][0]=values[1+(i*2)]          # Hautteil des Filenamens abfüllen in die Klassen Variable
                                                                     # wird aber nirgends verwendet.....

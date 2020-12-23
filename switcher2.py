@@ -46,14 +46,16 @@ import RPi.GPIO as GPIO         #  Raspberry GPIO Pins
 from sub.swparse2 import ActionParser    # Class ActionParser, parsed XML Files
 from sub.swdose import Dose                   # Class Dose, fuer das Dosenmanagement
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 from sub.swipc import IPC_Server    # Class IPC Server 
 from sub.swcfg_switcher import cfglist_swi
 from sub.swdefstatus import status_klein
 from sub.swdefstatus import status_gross
 from sub.swdefstatus import info_server
+from sub.configread_dosen import read_dosenconfig
+from sub.configread_dosen import write_dosenconfig
 
-from sub.swmqtt import MQTT_Conn        # Class mQTT
+from sub.mymqtt import MQTT_Conn        # Class mQTT
 from sub.swwetter import Wetter 
 from sub.sizeof import get_size
 
@@ -134,6 +136,10 @@ forground=0                 # wird gesetzt aber nicht verwendet
 manuell_reset=0             # aus Configfile: fuer manuell geschaltete Dosen, was tun at midnight
 oled_vorhanden=0            # aus Config File not used
 testmode=False              # aus Config File: Testmode Ja/Nein
+mqtt_broker_ip_cmdline = "" # IP-Adrrr mqtt broker from comandline
+mqtt_retry = True                   # do not retry on connect to brokaer
+mqtt_connect = False         # init lief ok Trua: notok, False
+mqtt_error = 0
 
 #
 #Nun die wichtigsten Lists of Lists deer ganzen Sauce... hier sind alle Schaltaktionen versorgt
@@ -173,8 +179,13 @@ info_fuer_webserver = [0 for z in range(4)]
                                 # index 2 und 3: for future use
 
 
-mqtt_ok = 0                     # init lief ok 0: notok, 1 OK
+
 mqtt_setup = 0                  # MQTT gebraucht in Switcher 2 0: kein mqtt verwendet, 1 verwendet
+
+progname = "switcher2"
+logfile_name = "switcher2.log"
+configfile_name = "swconfig.ini"
+printstring = "Switcher2 : "
 #
 #
 # ***** Function Parse commandline arguments ***********************
@@ -652,7 +663,7 @@ def  ipc_behandeln (func,wdose):
         path1 = os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script laeuft
 
         dosenconfig_file = path1 + "/swdosen.ini"
-        config_instance.write_value (dosenconfig_file, int(wdose))
+        write_dosenconfig (dosenconfig_file, int(wdose))
         anz_dosen_config = int(wdose)                   # in diese variable versorgen
         info_fuer_webserver[0] = anz_dosen_config       # wird später an den webserver uebermitelt
         term_verlangt = 1                               # dies führt zu Beenden des switchers und zu reboot pi
@@ -681,6 +692,7 @@ def get_saison():
     sim=0;
     season_ret = [0,0,0,0]
     mypri.myprint (DEBUG_LEVEL1,  "--> get_saison() gestartet")
+    
     season_ret = actionpars.check_saison(saison_simulate)               # ermittle die Saison
     mypri.myprint (DEBUG_LEVEL3, "check_saison() meldet: {}".format(season_ret))
     if  season_ret[0] > 6:                      # hier ist 4 abzuziehen, alles was danach >6 ist Fehler
@@ -756,7 +768,7 @@ def init_switcher(start):
     global actions_only,wochentag
     global GPIO, dosen
     global list_tage,list_dose
-    global mypri,ipc_instance, config_instance
+    global mypri,ipc_instance, config_instance, configfile_name
     global debug                # hier global deklariert, weil veraendert wird in dieser Funktion
     global zuhause, zuhause_old
     global actionpars, anz_dosen,anz_dosen_config
@@ -766,7 +778,7 @@ def init_switcher(start):
     global python_version
     global button_thread
     global info_fuer_webserver
-    global mymqtt_client, mqtt_ok, mqtt_setup, wetter_behandeln, my_wetter
+    global mymqtt_client, mqtt_connect, mqtt_setup, wetter_behandeln, my_wetter
 
 
 #  posit kein keyboard IR
@@ -779,7 +791,14 @@ def init_switcher(start):
         fortschritt = 0   
 
         path1 = os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script laeuft
-        mypri = MyPrint("switcher2","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
+        configfile_name = path1 + "/" + configfile_name
+        print ("Name logfile: {} ".format( path1 + "/" + logfile_name) )
+        print ("Name configfile: {} ".format( configfile_name) ) 
+        
+# create Instance of MyPrint Class 
+        mypri = MyPrint(  appname = progname, 
+                    debug_level = debug,
+                    logfile =  path1 + "/" + logfile_name ) 
         hostname = socket.gethostname()                                         # uebergebe appname und logfilename
         if version_info[0] < 3:
             python_version=2
@@ -801,63 +820,57 @@ def init_switcher(start):
         mypri.myprint (DEBUG_LEVEL0,  "Gestartet: {} Version: {} Python: {}  Startart: {}  Hostname: {}".format (modulename,switcher_version, python_version, startart,hostname))   # print signatur                                                           
         mypri.myprint (DEBUG_LEVEL0,  "--> init_switcher gestartet")	# wir starten       juni2018
     
-        config_instance = ConfigRead(debug)        # instanz der ConfigRead Class
+        config_instance = ConfigRead(debug_level = debug)      # instanz der ConfigRead Class   
         
         signal.signal(signal.SIGTERM, sigterm_handler)  # setup Signal Handler for Term Signal
         signal.signal(signal.SIGHUP, sigterm_handler)  # setup Signal Handler for Term Signal
         if debug > 0:
             mypri.myprint (DEBUG_LEVEL1,  "Switcher Debug-Output verlangt")	# wir starten       juni2018
-    
-        configfile=path1 + "/swconfig.ini"
-        ret=config_instance.config_read(configfile,"switcher",cfglist_swi)
+
+
+        ret = config_instance.config_read(configfile_name, "switcher",cfglist_swi)  # alese von abschnitt mqtt
+#        ret = 0
+
         if ret > 0:
-            print("config_read hat retcode: {}".format (ret))
+            self.myprint (DEBUG_LEVEL3, printstring + "config_read has retcode: {}".format (ret))
             sys.exit(2)
+
+
     # fertig behandlung confifile
        
-       
+        if (debug > 2):
+            print ( printstring + "Parameters after read configfile:")
+            for x, y in cfglist_swi.items():
+                print(x, y)
+                       
     # holen diverser Dinge aus der Config-Struktur   
         testmode = False
-        y = cfglist_swi.index("testmode")  + 1           # suche den Wert von testmode aus Config-file
-        testmode = cfglist_swi[y].decode()
-        if  testmode.find("Ja") != -1: 
+        
+       
+        if  cfglist_swi["testmode"] == "Ja": 
             testmode = True
             mypri.myprint (DEBUG_LEVEL0, "switcher2 im Config-File testmode=Ja gefunden")
         else:
             testmode = False
     
-        y = cfglist_swi.index("setup_mqtt")  + 1     # suche den Wert setup_mqtt aus Config-file
-        mqtt_setup = int(cfglist_swi[y])
+    
+ 
 
-        y = cfglist_swi.index("wetter")  + 1     # suche den Wert wetter aus Config-file
-        wetter_behandeln = int(cfglist_swi[y])
-
-    
-        y = cfglist_swi.index("gpio_home_switch")  + 1     # suche den Wert von gpio_home_switch aus Config-file
-        gpio_home_switch = int(cfglist_swi[y])
-    
-        y = cfglist_swi.index("gpio_home_button")  + 1     # suche den Wert von gpio_home_switch aus Config-file
-        gpio_home_button = int(cfglist_swi[y])
-    
-        y = cfglist_swi.index("gpio_home_led")  + 1           # suche den Wert von gpio_home_led aus Config-file
-        gpio_home_led = int(cfglist_swi[y])
-    
-        y = cfglist_swi.index("gpio_blink")  + 1           # suche den Wert von gpio_blink aus Config-file
-        gpio_blink = int(cfglist_swi[y])
-    
-        y = cfglist_swi.index("oled")  + 1           # suche den Wert von oled aus Config-file
-        oled_vorhanden = int(cfglist_swi[y])
-    
-        y = cfglist_swi.index("manuell_reset")  + 1           # suche den Wert von manuall reset aus Config-file
-        manuell_reset = int(cfglist_swi[y])
-     
+        mqtt_setup =        int(cfglist_swi["setup_mqtt"])       # suche den Wert setup_mqtt aus Config-file
+        wetter_behandeln =  int(cfglist_swi["wetter"])
+        gpio_home_switch =  int(cfglist_swi["gpio_home_switch"])     # suche den Wert von gpio_home_switch aus Config-file
+        gpio_home_button =  int(cfglist_swi["gpio_home_button"])     # suche den Wert von gpio_home_switch aus Config-file
+        gpio_home_led =     int(cfglist_swi["gpio_home_led"])          # suche den Wert von gpio_home_led aus Config-file
+        gpio_blink =        int(cfglist_swi["gpio_blink"])          # suche den Wert von gpio_blink aus Config-file
+        oled_vorhanden =    int(cfglist_swi["oled"])           # suche den Wert von oled aus Config-file
+        manuell_reset =     int(cfglist_swi["manuell_reset"])           # suche den Wert von manuall reset aus Config-file
         
+     
         if manuell_reset== 1:   # manuelle schaltungen nur bis Mitternacht
             mypri.myprint (DEBUG_LEVEL1,  "Manuelle Schaltungen nur bis Mitternacht")#	      juni2018
         
-        if gpio_home_button >0:             # wenn button definiert ist, wird kippschalter ignoriert
+        if gpio_home_button > 0:             # wenn button definiert ist, wird kippschalter ignoriert
             gpio_home_switch = 0
-    
     
            #Use BCM GPIO refernece instead of Pin numbers
         GPIO.setmode (GPIO.BCM)
@@ -873,9 +886,14 @@ def init_switcher(start):
     #  vorlaeufug alles aus dem Configfile entnommen
     # nun den config file swdosen.ini lesen
     
-        mypri.myprint (DEBUG_LEVEL1,"switcher2 Lese den file swdosen.ini ")  
         dosenconfig_file = path1 + "/swdosen.ini"
-        anz_dosen_config = config_instance.read_dosenconfig (dosenconfig_file)
+        mypri.myprint (DEBUG_LEVEL1,"switcher2 Lese den file {}". format(dosenconfig_file) ) 
+        
+ 
+        
+        anz_dosen_config = read_dosenconfig (dosenconfig_file, mypri ,debug)
+
+        
         mypri.myprint (DEBUG_LEVEL0,  "Anzahl Dosen konfiguriert in swdosen.ini: {}". format(anz_dosen_config))     
  
     
@@ -899,28 +917,44 @@ def init_switcher(start):
             blink_thread.start()
     #  der Blink Thtread beendet sich bei term_verlangt=1    
 
-        mqtt_ok = 0
+        mqtt_connect = False
         
         if wetter_behandeln == 1:
+            print ("wetter vorhanden")
             info_fuer_webserver[1] = 1              # wird später an den Webserver uebermittelt, beim status request
             mqtt_setup = 1
             
-            
+   
+        mypri.myprint (DEBUG_LEVEL1,"MQTT noetig oder verlangt: {}".format(JANEIN[mqtt_setup]))         
         if mqtt_setup == 1:   
                        
 # Nun wissen wir, ob MQTT Connection nötig ist:
 # entweder weil Wetter konfiguriert ist oder weil mind. einen Dose Schaltart 3 hat.
-            mypri.myprint (DEBUG_LEVEL1,"MQTT noetig oder verlangt: {}".format(JANEIN[mqtt_setup]))
-            mypri.myprint (DEBUG_LEVEL1,"Wait 5 sec. before attempting MQTT Connection")
-            sleep(5)
-            mymqtt_client = MQTT_Conn (debug, path1, "switcher2" + hostname)            
+ 
+            mypri.myprint (DEBUG_LEVEL1,"Wait 2 sec. before attempting MQTT Connection")
+            sleep(2)
+            
+                     
+ # create Instance of MQTT-Conn Class  
+            mymqtt_client = MQTT_Conn ( debug = debug, 
+                        path = path1, 
+                        client = progname, 
+                        ipadr = mqtt_broker_ip_cmdline, 
+                        retry = mqtt_retry, 
+                        conf = configfile_name)    # creat instance, of Class MQTT_Conn  
+                                    
+#            mymqtt_client = MQTT_Conn (debug, path1, "switcher2" + hostname)            
             sleep(1)        # wir warten 1 sek und fragen dann nach
-            ret = mymqtt_client.get_status() 
-            if ret > 0: 
-                mypri.myprint (DEBUG_LEVEL0, "Switcher init: mqtt fehler, rc: {}, kann nicht weiterfahren".format(ret))
-                raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
+ 
+            mqtt_connect, mqtt_error = mymqtt_client.get_status()           # get connection status
+    #  returns mqtt_error = 128 if not connected to broker
+            if mqtt_connect == True:
+                mypri.myprint (DEBUG_LEVEL0,  progname + "connected to mqtt broker")
             else:
-                mqtt_ok = 1
+                mypri.myprint (DEBUG_LEVEL0, "Switcher init: mqtt fehler, rc: {}, kann nicht weiterfahren".format(mqtt_error))
+                raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
+ 
+ 
                 
         if wetter_behandeln == 1:                 # wetter ist verlangt, also kreiere instanz der Wetter  Klasse
             my_wetter = Wetter (debug, path1, mymqtt_client)               
@@ -946,6 +980,7 @@ def init_switcher(start):
         debug = tmp_debug                # reset debuglevel for switcher
         actionpars.set_debug(debug)     # reset debug in actionpars
     
+        mypri.myprint (DEBUG_LEVEL1,  "Anzahl Dosen in XML File festellen")
     # Anzahl Dosen feststellen: loop ueber alle Saisons, alle Tage und schauen, wo maximum ist
         anz_dosen = 0
         for y in range (len(list_dose)):
@@ -990,7 +1025,7 @@ def init_switcher(start):
         # also n Instanzen der Klasse Dose erstellen    
     
         for i in range(anz_dosen_config):
-            dos = Dose(i, testmode, debug, path1, mqtt_ok, mymqtt_client)
+            dos = Dose(i, testmode, debug, configfile_name, mqtt_connect, mymqtt_client)
             if dos.errorcode == 99:
                 mypri.myprint (DEBUG_LEVEL1,  "Dose: {} meldet Fehler {}".format (i+1, dos.errocode))	 
                 raise RuntimeError('--> Switcher ernsthafter Fehler, check switcher2.log <----')
@@ -1298,7 +1333,7 @@ def terminate(was):
     if was > 3:
         del ipc_instance                # terminating INterprocess-Communication, Sockets und so....juni2018
         if mqtt_setup > 0 :
-            mymqtt_client.mqtt_stop()   # mqtt client beenden
+            mymqtt_client.loop_stop()   # mqtt client beenden
             del mymqtt_client
         del my_wetter
         

@@ -22,7 +22,7 @@ import time
 from time import sleep
 # import RPi.GPIO as GPIO         #  Raspberry GPIO Pins
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 from sub.swcfg_switcher import cfglist_akt       # struktur des Aktors Config im Config File  
 from sub.rpi_rf import RFDevice
 
@@ -39,12 +39,12 @@ class Aktor_2 (MyPrint):
     ' klasse aktor '
     aktorzahler = 0               # Class Variable
     
-    def __init__(self, dosennummer,debug_in, path_in):  # Init Funktion
+    def __init__(self, dosennummer,debug_in, config_filename_in):  # Init Funktion
         self.errorcode = 8
         self.nummer = Aktor_2.aktorzahler
         self.debug = debug_in
         self.dosennummer = dosennummer            # arbeite für diese Dose (1 bis n)
-        self.path = path_in          # pfad  main switcher
+        self.config_file = config_filename_in          # pfad  main switcher
 
         self.action_type = "Funk2"     # welche art Schalten ist dies hier
         
@@ -54,7 +54,7 @@ class Aktor_2 (MyPrint):
  # nun alle notwendigen Parameter aus dem Config File holen
         
         config = ConfigRead(self.debug)        # instanz der ConfigRead Class
-        ret = config.config_read(self.path + "/swconfig.ini","aktor_2",cfglist_akt)
+        ret = config.config_read(self.config_file,"aktor_2",cfglist_akt)        
         if ret > 0:
             self.myprint (DEBUG_LEVEL0, "config_read hat retcode: {}".format (ret))
             self.errorcode=99

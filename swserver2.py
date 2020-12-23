@@ -28,7 +28,7 @@ import signal, os
 from time import sleep
 from sub.swcfg_switcher import cfglist_swi
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 import sys
 from sys import version_info
 import argparse
@@ -73,7 +73,10 @@ returntext_1 = "Ausgeführt, Returncode : "
 returntext_2 = "Returncode : "
 keine_antwort = "Keine Antwort vom Switcher erhalten..."
 keine_antwort_simuliert = "SIMULIERT: Keine Antwort vom Switcher erhalten..."
-
+progname = "swserver2"
+logfile_name = "switcher2.log"
+configfile_name = "swconfig.ini"
+printstring = "swserver2 : "
 
 #  liste der html files: für Auswahl der Anzahl konfigurierten Dosen
 select_anzdosen_htmlfiles = [
@@ -145,11 +148,17 @@ def setup_server():
     reboot_verlangt = False           # reboot noch nicht verlangt
     signal.signal(signal.SIGTERM, sigterm_handler)  # setup Signal Handler for Term Signal
     pfad = os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script läuft
-    mypri = MyPrint("swserver2","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
-                                                        # übergebe appname und logfilename
-    config = ConfigRead(debug)        # instanz der ConfigRead Class
+    
+    # create Instance of MyPrint Class 
+    mypri = MyPrint(  appname = progname, 
+                    debug_level = debug,
+                    logfile =  pfad + "/" + logfile_name ) 
+    
+                                                        
+    config_instance = ConfigRead(debug_level = debug)      # instanz der ConfigRead Class   
 
-    ret = config.config_read(pfad + "/swconfig.ini","switcher",cfglist_swi)
+    config_filename = pfad + "/" + configfile_name
+    ret = config_instance.config_read(config_filename, "switcher",cfglist_swi)  # alese von abschnitt mqtt
     if ret > 0:
         mypri.myprint (DEBUG_LEVEL0, "config_read hat retcode: {}".format (ret))
         error = 8
@@ -162,8 +171,7 @@ def setup_server():
         mypri.myprint (DEBUG_LEVEL1, "swserver2.py simuliert verhalten des switchers, wert: {}".format(simulate_switcher_error))    
 
     try:
-        u = cfglist_swi.index("ipc_endpoint_c")  + 1           # suche den Wert von oled aus Config-file
-        ipc_data = int(cfglist_swi[u])
+        ipc_data = values["ipc_endpoint_s"]      
     except:
         ipc_data = "tcp://localhost:5555"
 
@@ -198,7 +206,6 @@ def do_getlog():
     p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
  
     (output, err) = p.communicate()
-## Wait for date to terminate. Get return returncode ##
     p_status = p.wait()
     
     #  damit auch alle chars kommen...

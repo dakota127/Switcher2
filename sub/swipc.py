@@ -46,7 +46,7 @@ class IPC_Server(MyPrint):
     instzahler=0           # Class variable Anzahl  instanzen
     context=0
     socket=0
-
+    endpoint =0
 #-------Constructor der Klasse ------------------------------------------
 # init Interprocess Comm, Sockets und so, mittels Module zeroMQ
 # siehe hier  http://zeromq.org
@@ -56,13 +56,13 @@ class IPC_Server(MyPrint):
         self.resultcode = 0
  # ZMQ context, only need one per application
         self.myprint (DEBUG_LEVEL1,   "--> IPC_Server _init_ called")
-        u=values.index("ipc_endpoint_s") + 1           # wo kommt der gelieferte name vor (index)
+        self.endpoint = values["ipc_endpoint_s"]       
         IPC_Server.context = zmq.Context()
         IPC_Server.socket = IPC_Server.context.socket(zmq.REP)  # war REP
  #   socket.bind("tcp://*:5555")
  
         try:
-            IPC_Server.socket.bind(values[u])
+            IPC_Server.socket.bind(self.endpoint)
         except:
             self.resultcode = 8
             self.myprint (DEBUG_LEVEL0,   "--> IPC_Server _init_  Socket Connection fehlerhaft")

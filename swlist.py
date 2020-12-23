@@ -21,7 +21,7 @@ from xml.dom import minidom
 from sub.swparse2 import ActionParser
 import argparse
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 from sub.swcfg_switcher import cfglist_swi
 from sys import version_info
 
@@ -39,6 +39,12 @@ list_tage= [ [] for z in range (3)]
 list_dose= [ [] for z in range (3)]                                    
 
 list_zimmer =[]
+
+
+progname = "swlist"
+logfile_name = "switcher2.log"
+configfile_name = "swconfig.ini"
+printstring = "Switcher2 : "
 
 DEBUG_LEVEL0=0
 DEBUG_LEVEL1=1
@@ -128,14 +134,20 @@ if __name__ == '__main__':
     options=argu()        
  #   Etablieren des Pfads 
     pfad=os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script läuft
-    logfile = pfad + "/switcher2.log"
-    mypri=MyPrint("swlist","../switcher2.log",debug)    # Instanz von MyPrint Class erstellen
-                                                        # übergebe appname und logfilename
-    config=ConfigRead(debug)        # instanz der ConfigRead Class
+    logfile_name = pfad + logfile_name
+    
+# create Instance of MyPrint Class 
+    mypri = MyPrint(  appname = progname, 
+                    debug_level = debug,
+                    logfile =  logfile_name )     
+    
+        
+    config_instance = ConfigRead(debug_level = debug)      # instanz der ConfigRead Class                                                          # übergebe appname und logfilename
 
     actionpars=ActionParser(debug,pfad)      # Instanz der ActionParser Class
-    configfile=pfad + "/swconfig.ini"
-    ret=config.config_read(configfile,"switcher",cfglist_swi)
+    configfile_name = pfad +  "/" + configfile_name
+    
+    ret = config_instance.config_read(configfile_name, "switcher",cfglist_swi)  # alese von abschnitt     
     if ret > 0:
         print("config_read hat retcode: {}".format (ret))
         sys.exit(2)

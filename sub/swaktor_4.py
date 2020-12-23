@@ -52,10 +52,10 @@ class Aktor_4 (MyPrint):
     Pins=[0,4, 22,18,25]
     Pins_ein_aus=[23,24]
 
-    def __init__(self, dosennummer,debug_in, path_in):  # Init Funktion
+    def __init__(self, dosennummer,debug_in, config_filename_in):  # Init Funktion
         self.errorcode = 8
         self.nummer = Aktor_4.aktorzahler
-        # path_in not used ----
+        # configfile not used here ----
         self.debug=debug_in
         self.dosennummer=dosennummer            # arbeite für diese Dose (1 bis n)
         GPIO.setmode (GPIO.BCM)

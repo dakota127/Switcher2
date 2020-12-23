@@ -4,11 +4,11 @@
 #-----------------------------------------------------
 #   Module MyPrint 
 #   
-#   Für Ausgaben aus Python Programmen anstelle des print statements
+#   TO replace the print statement used in Python Programs
 #
-#   2 Klassen sind hier definiert: MyLog und MyPrint
+#   2 Classes are defined here: MyLog und MyPrint
 #
-#   Anwendung siehe zwei Test Scripts printest_1.py und printest_2.py
+#   For demo see check out the two testscripts printest_1.py und printest_2.py
 #
 #   August 2018 Peter K. Boxler
 #------------------------------------------------------
@@ -34,7 +34,7 @@ class MyLog:
     filehandler=0
     consolehandler=0
     
-    def __init__(self, filename, appname,debug_level):
+    def __init__(self, filename, appname, debug_level):
       
 #----------------------------------------------------------------------
         """
@@ -43,6 +43,7 @@ class MyLog:
         MyLog.logger = logging.getLogger(appname)       # setup Logger
         MyLog.logger.setLevel(logging.DEBUG)
 
+            
 #        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         formatter = logging.Formatter('%(asctime)s - %(name)s: %(message)s')
         MyLog.consolehandler = logging.StreamHandler()  # setup Stremhandler
@@ -120,13 +121,11 @@ class MyPrint:
     dinstance=0     # class variable
     log_only=0
     
-    def __init__(self, appname,logfilename,debug_in):       # Konstruktor
-        self.filename=""
-        self.pfad=""
-        pass
-        self.pfad=os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script läuft
-        self.filename = self.pfad + "/" + logfilename
-        MyPrint.dinstance=MyLog(self.filename, appname,debug_in)  # instanz der MyLOg Klasse erstellen
+    def __init__(self, appname, debug_level, logfile):       # Konstruktor
+      
+
+            
+        MyPrint.dinstance = MyLog (logfile, appname, debug_level)  # instanz der MyLOg Klasse erstellen
     
 # 
 # Public Method für Logging aus dem Applikationsprogramm
@@ -145,14 +144,14 @@ class MyPrint:
              MyPrint.dinstance.logger.critical("MyPrint: debug-Level falsch !")
                       
 # 
-# Public Method für Logging Error in exc_info aus dem Applikationsprogramm
+# Public Method for Logging Error in exc_info aus dem Applikationsprogramm
 #-------------------------------------------------------------
                
     def myprint_exc(self,meldung):
         MyPrint.dinstance.logger.critical(meldung,exc_info=True)
 
 
-# Public Method für setup des Logging Levels. 
+# Public Method for setup des Logging Levels. 
 # die App muss das zuerst aus den Commandline Parms holen
 #-------------------------------------------------------------
          

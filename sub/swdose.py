@@ -27,7 +27,7 @@
 
 from sub.swcfg_switcher import cfglist_dos       # struktur der Dose Config im Config File  
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 import os
 from datetime import date, datetime, timedelta
 
@@ -42,7 +42,7 @@ class Dose(MyPrint):
     ' klasse dose '
     dosenzahler=0           # Class variable Anzahl Dosen
 #
-    def __init__(self, dose,testmode_in,debug_in, path_in, mqtt_status_in, mqttc_in):   # Init Methode der Dose, setzt Instanz Variablen
+    def __init__(self, dose,testmode_in,debug_in, config_filename_in, mqtt_status_in, mqttc_in):   # Init Methode der Dose, setzt Instanz Variablen
         self.errorcode = 8          # initwert, damit beim Del des Aktors richtig gehandelt wird
         self.nummer = Dose.dosenzahler      
         self.status_intern = 0          # interner Status der Dose, gemäss programmierten Aktionen
@@ -57,24 +57,27 @@ class Dose(MyPrint):
         self.zimmer_name = ""      
         Dose.dosenzahler += 1           # erhögen dosenzahler
         self.status_extern = 0
-        self.path = path_in             # pfad  main switcher
+        self.configfile = config_filename_in          
         self.dosen_nummer = Dose.dosenzahler
         self.myprint (DEBUG_LEVEL1, "--> dose {} dosen_init called, debug: {}  testmode: {}".format (self.dosen_nummer,debug_in,testmode_in))
         self.testmode = testmode_in
         self.mqttc = mqttc_in           # instanz mqtt client
-        self.mqtt_status = mqtt_status_in
+        self.mqtt_connect = mqtt_status_in
         self.msg_variante = 1           # default wert Test Pyload
         self.subscribe = 0
-        self.time_last_aktion = 0               
+        self.time_last_aktion = datetime.now()         # zeit merken 
         self.e = []
         self.debug_level2_mod = DEBUG_LEVEL2
         self.tmp = 0
         self.schalt = ""                # hilfsfeld    
  # nun schaltart für die Dosen  aus config holen
+       
+       
+        self.myprint (DEBUG_LEVEL1, "dosen init called, configfile: {}". format(self.configfile))
+        config = ConfigRead(debug_level = debug_in)      # instanz der ConfigRead Class    
+       
         
-        config=ConfigRead(self.debug)        # instanz der ConfigRead Class
-        configfile=self.path + "/swconfig.ini"
-        ret=config.config_read(configfile,"dose",cfglist_dos)
+        ret=config.config_read(self.configfile,"dose",cfglist_dos)
         if ret > 0:
             self.myprint (DEBUG_LEVEL0, "dosen init: config_read hat retcode: {}".format (ret))
             self.errorcode=99
@@ -83,15 +86,14 @@ class Dose(MyPrint):
         self.myprint (DEBUG_LEVEL3, "dose {} dosen_init: dose {} configfile read {}".format (self.nummer,self.dosen_nummer, cfglist_dos))
 
         self.schalt = "dose_" + str(self.dosen_nummer) + "_schaltart"
-        y=cfglist_dos.index(self.schalt)  + 1           # suche den Wert von schaltart aus Config-file
-        self.schalt=cfglist_dos[y].decode()
+        self.schalt = cfglist_dos[self.schalt]           # suche den Wert von schaltart aus Config-file
      
         self.tmp = "dose_" + str(self.dosen_nummer) + "_schaltprio"
-        y=cfglist_dos.index(self.tmp)  + 1           # suche den Wert von modus aus Config-file
-        self.schaltprio = int(cfglist_dos[y].decode())
+        self.schaltprio=int(cfglist_dos[self.tmp])           # suche den Wert von modus aus Config-file
+      
 
-        y=cfglist_dos.index("debug_schalt")  + 1           # suche den Wert von debug_schalt aus Config-file
-        tmp = int(cfglist_dos[y].decode())
+        tmp = int(cfglist_dos["debug_schalt"])            # suche den Wert von debug_schalt aus Config-file
+      
         if tmp > 0:
             self.debug_level2_mod  =  DEBUG_LEVEL0
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , alle schaltaktionen werden logged (in configfile)".format(self.dosen_nummer))
@@ -117,7 +119,7 @@ class Dose(MyPrint):
             
             
         if  self.schaltart == 3:
-            self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {}, MQTT_status: {}, msg_var:{}, subscribe:{}".format(self.dosen_nummer,self.schaltart, self.mqtt_status, self.msg_variante, self.subscribe))
+            self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {}, MQTT_status: {}, msg_var:{}, subscribe:{}".format(self.dosen_nummer,self.schaltart, self.mqtt_connect, self.msg_variante, self.subscribe))
         else:
             self.myprint (DEBUG_LEVEL1, "dosen init: dose {} , Schaltart: {}".format(self.dosen_nummer,self.schaltart))
         
@@ -126,7 +128,7 @@ class Dose(MyPrint):
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , nehme Schaltart 1 wegen Testmode !".format(self.dosen_nummer))
             self.schaltart = 1
         
-        if self.schaltart == 3 and self.mqtt_status == 0:
+        if self.schaltart == 3 and self.mqtt_connect == False:
             self.myprint (DEBUG_LEVEL0, "dosen init: dose {} , nehme Schaltart 1 da MQTT nicht definiert oder fehlerhaft ist !".format(self.dosen_nummer))
             self.schaltart = 1
                 
@@ -141,19 +143,19 @@ class Dose(MyPrint):
             
         if self.schaltart == 1:
             import sub.swaktor_1 
-            self.myaktor=sub.swaktor_1.Aktor_1(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_1.Aktor_1(self.dosen_nummer,self.debug,self.configfile)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 2:
             import sub.swaktor_2 
-            self.myaktor=sub.swaktor_2.Aktor_2(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_2.Aktor_2(self.dosen_nummer,self.debug,self.configfile)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 3:
             import sub.swaktor_3         
-            self.myaktor=sub.swaktor_3.Aktor_3(self.dosen_nummer,self.debug,self.msg_variante,self.subscribe,self.path, self.mqttc, self.aktor_callback)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_3.Aktor_3(self.dosen_nummer,self.debug,self.msg_variante,self.subscribe,self.configfile, self.mqttc, self.aktor_callback)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 4:
             import sub.swaktor_4         
-            self.myaktor=sub.swaktor_4.Aktor_4(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_4.Aktor_4(self.dosen_nummer,self.debug,self.configfile)          # Instanz der Aktor Class erstellenb
         elif self.schaltart == 5:
             import sub.swaktor_5         
-            self.myaktor=sub.swaktor_5.Aktor_5(self.dosen_nummer,self.debug,self.path)          # Instanz der Aktor Class erstellenb
+            self.myaktor=sub.swaktor_5.Aktor_5(self.dosen_nummer,self.debug,self.configfile)          # Instanz der Aktor Class erstellenb
 
         else:
             self.myprint (DEBUG_LEVEL0, "dose {} falsche Schaltart {}".format (self.nummer,self.schaltart))
@@ -323,7 +325,7 @@ class Dose(MyPrint):
 #   statusmeldungen hingegen, die mehr als 30 sekunden später eintreffen, werden betrachtet als von HAND AN DER DOSE
 #   geschaltet. Dies kann ja irgendwann passieren. In diesen Fall wird der status der dose verändert.
 #   ist etwas krude, tut aber den Dienst.
-    def aktor_callback(self,payload_in):
+    def aktor_callback(self,client,userdata, payload_in):
         
         time_new =  datetime.now() 
         delta = time_new - self.time_last_aktion

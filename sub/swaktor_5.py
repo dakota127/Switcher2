@@ -22,7 +22,7 @@ import time
 from time import sleep
 import RPi.GPIO as GPIO         #  Raspberry GPIO Pins
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 from sub.swcfg_switcher import cfglist_akt       # struktur des Aktors Config im Config File  
  
 DEBUG_LEVEL0=0                      
@@ -37,12 +37,12 @@ class Aktor_5 (MyPrint):
     ' klasse aktor '
     aktorzahler=0               # Class Variable
 
-    def __init__(self, dosennummer,debug_in , path_in):  # Init Funktion
+    def __init__(self, dosennummer,debug_in , config_filename_in):  # Init Funktion
         self.errorcode = 8           # init wert beliebig aber not zero
 
         self.nummer = Aktor_5.aktorzahler
         self.debug=debug_in
-        self.path = path_in          # pfad  main switcher
+        self.config_file = config_filename_in          
 
         self.dosennummer=dosennummer            # arbeite für diese Dose (1 bis n)
         self.code=""
@@ -62,7 +62,7 @@ class Aktor_5 (MyPrint):
  # nun alle GPIO Pins aus dem Config File holen
         
         config=ConfigRead(self.debug)        # instanz der ConfigRead Class
-        ret=config.config_read(self.path + "/swconfig.ini","aktor_5",cfglist_akt)
+        ret = config.config_read(self.config_file,"aktor_5",cfglist_akt)
         if ret > 0:
             self.myprint (DEBUG_LEVEL1, "config_read hat retcode: {}".format (ret))
             self.errorcode=99

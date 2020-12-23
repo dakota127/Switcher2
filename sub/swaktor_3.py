@@ -22,7 +22,7 @@ import time
 from time import sleep
 import RPi.GPIO as GPIO         #  Raspberry GPIO Pins
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+from sub.myconfig import ConfigRead
 from sub.swcfg_switcher import cfglist_akt       # struktur des Aktors Config im Config File  
 import socket
 import paho.mqtt.client as mqtt
@@ -44,14 +44,14 @@ class Aktor_3 (MyPrint):
     ' klasse aktor '
     aktorzahler=0               # Class Variable
     
-    def __init__(self, dosennummer,debug_in, meldungs_typ, subscribe, path_in, mqtt_client_in, callback_dosen):  # Init Funktion
+    def __init__(self, dosennummer,debug_in, meldungs_typ, subscribe, config_filename_in, mqtt_client_in, callback_dosen):  # Init Funktion
         self.errorcode = 8           # init wert beliebig aber not zero
         self.nummer = Aktor_3.aktorzahler
         self.debug = debug_in
         self.mqttc = mqtt_client_in
         self.meldungs_variante = meldungs_typ             # typ der mqtt meldung und topic
         self.subscribe_noetig = subscribe
-        self.path = path_in          # pfad  main switcher
+        self.config_file = config_filename_in          # configfile
         self.dosencallback = callback_dosen
         self.dosennummer = dosennummer            # arbeite für diese Dose (1 bis n)
         self.mqtt_broker_ip = ""
@@ -68,7 +68,7 @@ class Aktor_3 (MyPrint):
  # nun mqtt Brokder data aus config holen
         
         config = ConfigRead(self.debug)        # instanz der ConfigRead Class
-        ret = config.config_read(self.path + "/swconfig.ini","aktor_1",cfglist_akt)
+        ret = config.config_read(self.config_file,"aktor_3",cfglist_akt)
         if ret > 0:
             self.myprint (DEBUG_LEVEL0, "config_read hat retcode: {}".format (ret))
             self.errorcode = 99
@@ -85,10 +85,10 @@ class Aktor_3 (MyPrint):
             first, second = TOPIC_S[self.meldungs_variante].split('%')
             topic_subscribe = first + str(self.dosennummer) + second
   
-            self.mqttc.mqtt_subscribe_topic (topic_subscribe , self.dosencallback)     # subscribe to topic
-            self.myprint (DEBUG_LEVEL0,  "--> aktor3 mqtt subscription, topic: {} ".format(topic_subscribe))
+            self.mqttc.subscribe_topic (topic_subscribe , self.dosencallback)     # subscribe to topic
+            self.myprint (DEBUG_LEVEL0,  "--> aktor3 done mqtt subscription, topic: {} ".format(topic_subscribe))
     
-            self.mqttc.mqtt_subscribe_topic ("switcher2/switch/lw" , self.last_will)              # subscribe to Last Will Topic der Sensoren
+            self.mqttc.subscribe_topic ("switcher2/switch/lw" , self.last_will)              # subscribe to Last Will Topic der Sensoren
 
         pass
 
@@ -136,8 +136,14 @@ class Aktor_3 (MyPrint):
         if self.broker_ok:          # nur senedne, wenn mqtt connection ok
                                     # wir verwenden für loggin den mod debuglevel von der dose
             self.myprint (debug_level_mod, "--> aktor3. publish mqtt Topic: {} , Payload: {}".format(self.mqtt_topic, payload))
-        
-            self.mqttc.mypublish(self.mqtt_topic, payload)
+ 
+ 
+        mqtt_error = self.mqttc.publish_msg (self.mqtt_topic, payload)
+#        time.sleep(0.3)
+        if mqtt_error > 0:
+            myprint.myprint (DEBUG_LEVEL0, progname +  ": publish returns errorcode: {}".format(mqtt_error)) 
+  #          return (mqtt_error)       
+  #          self.mqttc.mypublish(self.mqtt_topic, payload)
 
 
 #---- set_sensorstat -----------------

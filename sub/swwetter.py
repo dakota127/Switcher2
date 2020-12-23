@@ -22,7 +22,7 @@ import sys
 import time
 from time import sleep
 from sub.myprint import MyPrint              # Class MyPrint zum printern, debug output
-from sub.configread import ConfigRead
+# from sub.myconfig import ConfigRead
 from sub.swdefstatus import status_wetter_innen         # Struktur (Liste) für Indoor Statusmeldung)
 from sub.swdefstatus import status_wetter_aussen        # Struktur (Liste) für Outdoor Statusmeldung)
 import json
