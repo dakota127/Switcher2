@@ -98,7 +98,7 @@ class MQTT_Conn(MyPrint):
             "mqtt_retain"   : 0 ,
             "retry_intervall" : 1,          # seconds
             "retry_counter"  : 2,
-            "userdata"      : "",
+            "userdata"      : "u-data",
         }
 
  # get get data from configfile
