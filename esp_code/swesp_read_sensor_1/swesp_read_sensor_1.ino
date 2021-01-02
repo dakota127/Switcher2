@@ -140,6 +140,7 @@ unsigned long start_time_ms;
 unsigned long elapsed_time_ms;
 float     voltage_value_raw;      //Define variable to read ADC data
 float     voltage_value;          //Define variable to read ADC data
+bool      deep_sleep_forever = false;    // if battery is <2.8 Volt
 
 char      battery_string[15];     // für Batterie Zustand
 char      sensor_string[15];     // für Sensor Zustand
@@ -293,7 +294,9 @@ void setup() {
   pinMode       (indoor_outdoor_pin, INPUT_PULLUP);   // defines indoor-outdoor
   pinMode       (adc_sensor_pin, OUTPUT);       // Spannungsteiler/Sensor ein/aus     
   digitalWrite  (adc_sensor_pin, HIGH);          // Spannungsteiler/Sensor einschalten
+  DEBUGPRINTLN1 ("Power Sensor/ADC einschalten");
   
+  // check it outdoor or indoor sensor
   inout_door = digitalRead  (indoor_outdoor_pin);
   if (inout_door == HIGH) {
      DEBUGPRINTLN1 ("Bin Indoor");
@@ -303,7 +306,8 @@ void setup() {
      DEBUGPRINTLN1 ("Bin Outdoor");
      last_will_msg = last_will_msg + "outdoor";
   }
-   DEBUGPRINTLN1 ("Sensor/ADC einschalten");
+
+
 
   DEBUGPRINTLN1 ("Mache WiFi Begin --------");
   // We start by connecting to a WiFi network
@@ -340,6 +344,7 @@ void setup() {
    DEBUGPRINT1  ("bis setup done msec: "); // time since program started
    DEBUGPRINTLN1 ( elapsed_time(start_time_ms));
    DEBUGPRINTLN1 ("\nSetup Done...");
+
 
 //---------------------------
 // nun Sensor lesen, warten auf wiFi und dann MQTT
@@ -499,7 +504,7 @@ void display_Esp_Info() {
 //-------------------------------------
 void deepsleep() {
 
-  DEBUGPRINTLN1 ("Sensor/ADC ausschalten");
+  DEBUGPRINTLN1 ("Power Sensor/ADC ausschalten");
   digitalWrite  (adc_sensor_pin, LOW);          // Spannungsteiler/Sensor ausschalten 
   DEBUGPRINT1 ("Going into deep sleep for ");
   DEBUGPRINT1 (String(sleepTimeS));
@@ -510,6 +515,7 @@ void deepsleep() {
   ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
   // It can take a while for the ESP to actually go to sleep.
   // When it wakes up we start again in setup().
+  delay (1);
 
 // wird nie ausgeführt...
   DEBUGPRINTLN1 ("Nach deep sleep...");
@@ -590,7 +596,8 @@ String batt_voltage () {
     }
     else
     {
-     bat_str = bat_str + " - Achtung"; 
+     bat_str = bat_str + " - Recharge Battery"; 
+     deep_sleep_forever = true;
     }
   } 
 
