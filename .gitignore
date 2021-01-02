@@ -2,6 +2,7 @@
 MyResources
 Project-Description
 Sources/oldstuff
+tmp
 *.*~
 *.log
 *.pid
