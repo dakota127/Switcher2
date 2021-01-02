@@ -80,7 +80,7 @@ extern "C" {
 // ------------------------------------------------------
 #define TICKER_TIME_MS     10000  // Zeit für Watchdog Interrrupt
 
-#define   VCC_ADJ   0.975   // Korrekturfaktor bei VCC Messung (kalibriert mit Voltmeter)
+#define   VCC_ADJ   0.994   // Korrekturfaktor bei VCC Messung (kalibriert mit Voltmeter)
 
 // ---- includes -------------------------------------------
 #include <Adafruit_Sensor.h>
@@ -124,7 +124,6 @@ const char* wifi_ssid =       WAN_SSID ;
 const char* wifi_password =   WAN_PW;
 const char* user_id_mqtt =    MQTT_USER;
 const char* password_mqtt =   MQTT_PW;
-
 
 
 // IP Adresse des MQTT Brokers
