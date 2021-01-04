@@ -50,7 +50,7 @@
 //
 //
 #if defined TEST
-#define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
+#define DEBUGLEVEL 2      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
 // Time to deepsleep (in seconds):
 const int sleepTimeS = 60;        // 60 ist etwa 1 min 
 #else
@@ -322,7 +322,7 @@ void setup() {
   WiFi.config( staticIP, gateway, subnet ,dns);  
   WiFi.begin( wifi_ssid, wifi_password ); 
   
-  Serial.print("bis nach wifi setup msec: "); // time since program started
+  Serial.print("bis nach wifi begin msec: "); // time since program started
   Serial.println ( elapsed_time(start_time_ms) );
     
   // default settings for bme280 I2C
@@ -352,6 +352,7 @@ void setup() {
    readSensor ();
    batt_status = batt_voltage ();
    delay(10);
+
   
    waitForWifi();           // connect to WiFi, kommt nicht zurück, falls NO connection
 
