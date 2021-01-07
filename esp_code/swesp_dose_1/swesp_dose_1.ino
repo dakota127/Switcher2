@@ -42,6 +42,8 @@ const int interruptPin = 0; //Flash button on board     für
 
 #include <PubSubClient.h>
 #include <EEPROM.h>
+#include "sw_credentials.h"             // wlan/mqtt credentials
+
 
 /* diese Werte anpassen   <<--------- */
 const char* ssid = "P-NETGEAR";           // WLAN SSID
@@ -65,9 +67,9 @@ String last_will_msg = "Verbindung verloren zu mqtt dose: ";
 const char*   publish_topic;
 /* diese Werte anpassen   <<--------- */
 
-const char* user_id="switcher2";
-const char* password_mqtt =  "itscool";
-
+const char* user_id       = MQTT_USER;      // from credentials.h
+const char* password_mqtt =  MQTT_PW;
+const char* mqtt_server   = MQTT_IP; 
 
 int stat_pin1;
 int stat_pin2;
@@ -75,8 +77,6 @@ int dosennummer;
 int dosenstatus;        // variable für den aktuellen Status der Dose 1=ein, 0= aus
 long time_lastMsg = 0;
 
-// IP-Adr des MQTT Brokers  
-const char* mqtt_server = ip_adr_broker;        // IP-AD MQTT Broker
 
 WiFiClient espClient;
 PubSubClient client(espClient);

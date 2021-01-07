@@ -1,8 +1,9 @@
 
 /* **************************************************************************
     Switcher 2  Temp Sensor Sketch fuer BME280
-    mit Deep Sleep
-
+    mit Deep Sleep and watchdog functionality
+    *************************************************************************  
+    
     topic für switcher 2 wetter ist : 'switcher2/wetter/data'
     payload :   indoor/battstatus/sensorstatus/elapsed_time_ms/TEMP/HUM
     oder
@@ -31,6 +32,9 @@
 
     Mit Dank auch an Michel Deslierres
     https://www.sigmdel.ca/michel/program/esp8266/arduino/watchdogs_en.html
+
+    And also this guy:
+    https://arduinodiy.wordpress.com/2020/01/18/very-deepsleep-and-energy-saving-on-esp8266/
     
     Battery Level:
     Entweder wird direkt VCC gemessen (wenn ein LiFePo4 direkt angeschlossen ist) 
@@ -49,15 +53,23 @@
 //*************************************************
 //
 //
-#if defined TEST
+#ifdef TEST
 #define DEBUGLEVEL 2      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
 // Time to deepsleep (in seconds):
-const int sleepTimeS = 60;        // 60 ist etwa 1 min 
+const int sleepTimeS = 90;        // 90 ist etwa 1.5 min 
 #else
-#define DEBUGLEVEL 1      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
+#define DEBUGLEVEL 0      // für Debug Output, für Produktion DEBUGLEVEL 0 setzen !
 // Time to deepsleep (in seconds):
 const int sleepTimeS = 2000;        // 2000 ist etwa 30 Minuten
 #endif
+
+// Macro to print elapsed time
+#if DEBUGLEVEL > 0
+#define PRINTTIME(x) Serial.println (); Serial.print ("--> "); Serial.print(x); Serial.println (elapsed_time(start_time_ms))
+#else
+#define PRINTTIME(x) 
+#endif
+
 
 
 // zum inkludieren der richtigen Lib (ESP32 oder ESP8266)
@@ -66,7 +78,7 @@ const int sleepTimeS = 2000;        // 2000 ist etwa 30 Minuten
 // #define LAST_WILL      // auskommentieren macht keinen MQTT LastWill
 #define MQTT_AUTH         // auskommentieren wenn MQTT connect ohne userid/password 
 
-#if defined LAST_WILL      // beide geht nicht !
+#ifdef LAST_WILL      // beide geht nicht !
 #undef MQTT_AUTH
 #endif
 
@@ -87,14 +99,14 @@ extern "C" {
 #include <Adafruit_BME280.h>
 #include <Ticker.h>
 #include <PubSubClient.h>
-#include <DebugUtils.h>     // Library von Adreas Spiess
-#include <sw_credentials.h>    // eigene crendentials
+#include <DebugUtils.h>                 // Library von Adreas Spiess
+#include "sw_credentials.h"             // wlan/mqtt credentials
 
 // esp8266 oder esp32 ----------------------
-#if defined ESP8266
+#ifdef ESP8266
   #include <ESP8266WiFi.h>
-  const int indoor_outdoor_pin = 14;      // um indoor/outdoor festzustellen
-  const int adc_sensor_pin = 12;          // 1: sensor/spannungsteiler ein, 0: aus
+  const int indoor_outdoor_pin = 14;     // um indoor/outdoor festzustellen
+  const int adc_sensor_pin = 12;         // 1: sensor/spannungsteiler ein, 0: aus
 #else
   #include <WiFi.h>
   const int indoor_outdoor_pin = 14;     // um indoor/outdoor festzustellen  
@@ -111,12 +123,12 @@ const int ipadr_indoor = 161;         // pos 3 der IPAdr, wird zur runtime geset
 const int ipadr_outdoor = 162;         // nachdem indoor oder outdoor bekannt ist
 
 Ticker sleepTicker;
-Adafruit_BME280 bme; // I2C
+Adafruit_BME280 bme;                    // I2C
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 
-ADC_MODE(ADC_VCC);          // nötig bei VCC Messung
+ADC_MODE(ADC_VCC);                      // nötig bei VCC Messung
 
 
 // werte kommen aus sw_credentials.h
@@ -124,10 +136,9 @@ const char* wifi_ssid =       WAN_SSID ;
 const char* wifi_password =   WAN_PW;
 const char* user_id_mqtt =    MQTT_USER;
 const char* password_mqtt =   MQTT_PW;
+const char* ip_mqtt =           MQTT_IP;
 
-
-// IP Adresse des MQTT Brokers
-const char* mqtt_server = "192.168.1.153";
+char  wifi_ssid_old[6];
 
 //Variables Sensor
 int       chk;
@@ -151,22 +162,28 @@ int       value = 0;
 String    batt_status;
 char*     topic =     "switcher2/wetter/data";
 char*     topic_lw =  "switcher2/wetter/lw";
-int       inout_door ;       // HIGH: indoor, LOW: outdoor
+int       inout_door ;          // HIGH: indoor, LOW: outdoor
 String    last_will_msg = "Verbindung verloren zu Sensor: ";
 String    the_sketchname;
 unsigned long currentMillis;
 bool      mqtt_status;
-#define LED 2 //Define blinking LED pin
-  
+#define LED 2                   //Define blinking LED pin
+int n;
+
+// We make a structure to store connection information 
 // The ESP8266 RTC memory is arranged into blocks of 4 bytes. The access methods read and write 4 bytes at a time,
 // so the RTC data structure should be padded to a 4-byte multiple.
 struct {
-  uint32_t crc32;   // 4 bytes
-  uint8_t channel;  // 1 byte,   5 in total
-  uint8_t ap_mac[6]; // 6 bytes, 11 in total
-  uint8_t padding;  // 1 byte,  12 in total
+  uint32_t crc32;         // 4 bytes
+  uint8_t channel;        // 1 byte,   5 in total
+  uint8_t ap_mac[6];      // 6 bytes, 11 in total
+  uint8_t ssid[6];        // 6 bytes, 17 in total
+  unsigned long waketime; // 4 bytes last wake time 21 in total 
+  uint8_t padding1;        // 1 byte,  22 in total
+  uint8_t padding2;        // 1 byte,  23 in total
+  uint8_t padding3;        // 1 byte,  24 in total
 } rtcData;
-
+  
 // Function Prototypes -----------------------
 
 uint32_t calculateCRC32(const uint8_t *data, size_t length);  // CRC function used to ensure data validity
@@ -195,8 +212,13 @@ void setup() {
 
   Serial.begin(115200);
   while (!Serial) { }
-  DEBUGPRINTLN0 ("Starting Setup --------"); 
   display_Running_Sketch();
+
+ // we disable WiFi, coming from DeepSleep, as we do not need it right away
+  WiFi.mode( WIFI_OFF );
+  WiFi.forceSleepBegin();
+  delay( 1 );
+
   
 // dies von hier:
 // https://www.sigmdel.ca/michel/program/esp8266/arduino/watchdogs2_en.html
@@ -275,18 +297,19 @@ void setup() {
       break;
   }
   
- 
 
-#if defined TEST
+#ifdef TEST
   DEBUGPRINTLN1 ("TEST ist gesetzt <------------");
+  display_Esp_Info();
 #endif    
 
   DEBUGPRINT1 ("deepsleep time: ");
   DEBUGPRINTLN1 (sleepTimeS);
-  display_Esp_Info();
-
+  
+ 
+  
   if (software_wachtdog)  {
-      DEBUGPRINTLN1     ("War Software Watchdog Reset, also mache deepsleep");
+      DEBUGPRINTLN0     ("War Software Watchdog Reset, also mache deepsleep");     
       deepsleep();
   }
   
@@ -307,23 +330,67 @@ void setup() {
      last_will_msg = last_will_msg + "outdoor";
   }
 
+  bool ret1 = read_rtc_men ();              // read data from rtc memory
+
+#ifdef TEST
+  printMemory();                            // print memory for test
+#endif
+
+  Serial.print ("Last waketime: ");         // last wake duration from rtc mem
+  Serial.println (rtcData.waketime);
+  
+    //Switch Radio back On
+  WiFi.forceSleepWake();
+  delay( 1 );
+
+// Disable the WiFi persistence.  The ESP8266 will not load and save WiFi settings unnecessarily in the flash memory.
+  WiFi.persistent( false );
 
 
   DEBUGPRINTLN1 ("Mache WiFi Begin --------");
   // We start by connecting to a WiFi network
-  DEBUGPRINT1 ("Connecting to: ");
-  DEBUGPRINTLN1 (wifi_ssid);
 
 // setzt static IP je nach indoor/outdoor
   if (inout_door == HIGH) {staticIP[3] = ipadr_indoor;}
   else {staticIP[3] = ipadr_outdoor;}
-      
-  WiFi.mode(WIFI_STA);
-  WiFi.config( staticIP, gateway, subnet ,dns);  
-  WiFi.begin( wifi_ssid, wifi_password ); 
+
+// Bring up the WiFi connection
+  WiFi.mode( WIFI_STA );
+  WiFi.config( staticIP,dns, gateway, subnet );
+
+// now, we need to compare the last used ssid (from rtc mem) with the current ssid
+  memcpy( wifi_ssid_old, rtcData.ssid, 6 );  // Copy 6 bytes of ssid used
+
+  bool same = true;
+  for (n = 0; n < (sizeof (wifi_ssid)) ; n++ ) {
+   if (wifi_ssid_old[n] !=  wifi_ssid[n])
+    same = false;
+  }
   
-  Serial.print("bis nach wifi begin msec: "); // time since program started
-  Serial.println ( elapsed_time(start_time_ms) );
+  if (same == false) {
+    DEBUGPRINTLN1 ("we have new ssid: ");
+    DEBUGPRINTLN1 (wifi_ssid);
+    ret1 = false;                       // ssid has changed so we need to do e regular wifi.begin()
+  }
+ 
+  // ssid has not changed
+  // so we replace the normally used "WiFi.begin();" with a precedure using connection data stored by us
+  if( ret1 ) {
+
+    DEBUGPRINTLN1 ("rtc data valid, make quick wifi connection");
+  // The RTC data was good, make a quick connection
+  WiFi.begin( wifi_ssid, wifi_password, rtcData.channel, rtcData.ap_mac, true );
+  }
+  else {
+     DEBUGPRINTLN1 ("rtc data NOT valid or new ssid, make regular wifi connection");
+  // The RTC data was not valid, so make a regular connection
+    WiFi.begin( wifi_ssid, wifi_password );
+  }
+
+  // before we do waitforwifi we initialize the sensor und read from it
+  // only the do we waitforwifi
+   PRINTTIME ("bis nach wifi begin msec: ");
+
     
   // default settings for bme280 I2C
   sensor_status = bme.begin();  
@@ -341,30 +408,31 @@ void setup() {
    }
     // sens_stat wird später im MQTT payload verwendet
     
-   DEBUGPRINT1  ("bis setup done msec: "); // time since program started
-   DEBUGPRINTLN1 ( elapsed_time(start_time_ms));
+   PRINTTIME ("bis setup done msec: ");
    DEBUGPRINTLN1 ("\nSetup Done...");
 
 
 //---------------------------
-// nun Sensor lesen, warten auf wiFi und dann MQTT
+// read Sensor, warten auf wiFi und dann MQTT
 
    readSensor ();
    batt_status = batt_voltage ();
    delay(10);
 
-  
    waitForWifi();           // connect to WiFi, kommt nicht zurück, falls NO connection
 
  
-   DEBUGPRINT1  ("bis wifi da msec: "); // time since program started
-   DEBUGPRINTLN1  ( elapsed_time(start_time_ms) );
+   PRINTTIME ("bis wifi ok msec: ");
+  
    mqtt_connect();             // connect to MQTT broker
 
-    DEBUGPRINT1  ("bis mqtt connect msec: "); // time since program started
-    DEBUGPRINTLN1 ( elapsed_time(start_time_ms));
+   PRINTTIME ("bis mqtt connect msec: ");
+   
+    elapsed_time_ms =  rtcData.waketime;    // get last elapsed time from rtc memory
+    
+//    elapsed_time_ms =  elapsed_time(start_time_ms);
 
-    elapsed_time_ms =  elapsed_time(start_time_ms);
+// put togehther the message 
     msg = "";
     int elapsed_time_int = (int)elapsed_time_ms;
     sprintf(elapsed_time_c, "%5d", elapsed_time_int);
@@ -412,11 +480,14 @@ void setup() {
         }
 
     }
-    
-   watchdog_sketch();
- 
-}
 
+   PRINTTIME ("bis vor rtc write msec: "); // time since program started
+   
+   write_rtc_mem();                         // write rtc memory
+   watchdog_sketch();                       // pretend watchdog has barked 
+                                            // do deepsleep at the end
+}
+// end setup code -------------------------------
 
 //------------------------------------------------
 void loop() {
@@ -444,13 +515,15 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length) {
  //   DEBUGPRINTLN1  (crc);
   return crc;
 }
+
+
 //---------------------------------------------
 //prints all rtcData, including the leading crc32
 void printMemory() {
 
-   return;
   
-  char buf[3];
+  DEBUGPRINTLN1 ("rtc memory:");
+  char buf[25];
   uint8_t *ptr = (uint8_t *)&rtcData;
   for (size_t i = 0; i < sizeof(rtcData); i++) {
     sprintf(buf, "%02X", ptr[i]);
@@ -513,7 +586,8 @@ void deepsleep() {
 
   sleepTicker.detach(); 
  
-  ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
+ // ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
+   ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DISABLED);
   // It can take a while for the ESP to actually go to sleep.
   // When it wakes up we start again in setup().
   delay (1);
@@ -526,17 +600,21 @@ void deepsleep() {
 //--- Watchdog Interrupt Routine ---------------------------------------------
 void watchdog_sketch() {
   
-  DEBUGPRINT1  ("\nwatchdog_sketch, arbeit fertig in: ");
+  DEBUGPRINT1  ("\nactivate watchdog_sketch, work done in: ");
   DEBUGPRINT1  ( elapsed_time(start_time_ms) );
   DEBUGPRINTLN1 (" ms");
 
   elapsed_time_ms = elapsed_time(start_time_ms);
+  
+  // check wether wachdog has actually bitten or if we ourself have called this function
   // Wenn Watchdog bellt, weill Operation zu lange dauerte
   // Clear Wifi state.
+  
   yield();
+  
   if (elapsed_time_ms <= TICKER_TIME_MS) {
       DEBUGPRINTLN1 ("elapsed_time_ms time ist KLEINER als Tickertime");
-    }
+  }
   else {
       DEBUGPRINTLN1 ("elapsed_time_ms time ist GROESSER als Tickertime !");
       delay(1);
@@ -644,6 +722,11 @@ void readSensor () {
 //------------------------------------
 void wifi_details()
 {
+  
+#ifndef TEST
+  return;
+#endif
+  
    DEBUGPRINTLN1    ("");
    DEBUGPRINT1    ("WiFi connected to SSID: ");
    DEBUGPRINTLN1    (WiFi.SSID());
@@ -671,11 +754,16 @@ int retries;
    }
     
   if (WiFi.status() == WL_CONNECTED) {
+
     wifi_details();
+
     return;
   }
 
-  
+
+    WiFi.disconnect( true );
+    delay( 1 );
+    WiFi.mode( WIFI_OFF );
   // no connection...
   DEBUGPRINTLN1  ("\nno wifi connection");
   // gehe mal schlafen, ev. ist es dann besser....
@@ -692,7 +780,7 @@ void mqtt_connect() {
   for (int i=0; i < 2; i++) {
 
     DEBUGPRINT1 ("\nAttempting MQTT connection...Client-ID: ");
-    client.setServer(mqtt_server, 1883);
+    client.setServer(ip_mqtt, 1883);
     // Create a random client ID
     String clientId = the_sketchname;
     clientId += String(random(0xffff), HEX);
@@ -755,6 +843,41 @@ int getBootDevice(void) {
 }
     
 //------------------------------------------------
+
+bool read_rtc_men () {
+
+  DEBUGPRINTLN1 ("read rtc memory");
+  // Try to read WiFi settings from RTC memory
+bool rtcValid = false;
+if( ESP.rtcUserMemoryRead( 0, (uint32_t*)&rtcData, sizeof( rtcData ) ) ) {
+  // Calculate the CRC of what we just read from RTC memory, but skip the first 4 bytes as that's the checksum itself.
+  uint32_t crc = calculateCRC32( ((uint8_t*)&rtcData) + 4, sizeof( rtcData ) - 4 );
+ 
+  if( crc == rtcData.crc32 ) {
+    rtcValid = true;
+    DEBUGPRINTLN0 ("rtc mem is valid");   
+    return (rtcValid);
+
+  }
+}
+
+}
+//------------------------------------------------
+void write_rtc_mem() {
+ DEBUGPRINTLN1 ("write rtc memory");  
+//-----
+// Write current connection info back to RTC
+
+rtcData.channel = WiFi.channel();
+rtcData.waketime =  elapsed_time(start_time_ms);
+memcpy( rtcData.ap_mac, WiFi.BSSID(), 6 ); // Copy 6 bytes of BSSID (AP's MAC address)
+memcpy( rtcData.ssid, wifi_ssid, 6 );  // Copy 6 bytes of ssid used
+// calculate crc32
+rtcData.crc32 = calculateCRC32( ((uint8_t*)&rtcData) + 4, sizeof( rtcData ) - 4 );
+ESP.rtcUserMemoryWrite( 0, (uint32_t*)&rtcData, sizeof( rtcData ) );
+
+}
+
 
 /*
  *  Returns the number of milliseconds elapsed_time_ms since  start_time_ms.
