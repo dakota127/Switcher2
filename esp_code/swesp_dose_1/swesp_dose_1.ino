@@ -90,7 +90,6 @@ struct Dose_struct {
   int einaus;
 };
 int nekst_free;
-String the_sketchname;
 
 //------------------------------------------------
 // displays at startup the Sketch running in the Arduino
@@ -99,7 +98,7 @@ void display_Running_Sketch (void){
   int slash_loc = the_path.lastIndexOf('/');
   String the_cpp_name = the_path.substring(slash_loc+1);
   int dot_loc = the_cpp_name.lastIndexOf('.');
-  the_sketchname = the_cpp_name.substring(0, dot_loc);
+  String the_sketchname = the_cpp_name.substring(0, dot_loc);
 
   Serial.print("\nRunning Sketch: ");
   Serial.println(the_sketchname);
@@ -253,7 +252,7 @@ void reconnect() {
      Serial.print("Attempting MQTT connection...Client-ID: ");
     client.setServer(mqtt_server, 1883);
     // Create a random client ID
-    String clientId = the_sketchname;
+    String clientId = "swesp";
     clientId += String(random(0xffff), HEX);
     Serial.println (clientId);
     // Attempt to connect

@@ -92,7 +92,9 @@ extern "C" {
 // ------------------------------------------------------
 #define TICKER_TIME_MS     10000  // Zeit für Watchdog Interrrupt
 
-#define   VCC_ADJ   0.994   // Korrekturfaktor bei VCC Messung (kalibriert mit Voltmeter)
+#define   VCC_ADJ_indoor   0.98   // Korrekturfaktor bei VCC Messung (kalibriert mit Voltmeter)
+#define   VCC_ADJ_outdoor  1.01   // Korrekturfaktor bei VCC Messung (kalibriert mit Voltmeter)
+// voltage divider has 5% resistors, so we need to calibrate each device separately
 
 // ---- includes -------------------------------------------
 #include <Adafruit_Sensor.h>
@@ -149,8 +151,10 @@ long      previousMillis = 0;     // will store last tim
 long      interval = 500;        // interval  (milliseconds)
 unsigned long start_time_ms;      
 unsigned long elapsed_time_ms;
+unsigned long wifi_time_ms;
 float     voltage_value_raw;      //Define variable to read ADC data
 float     voltage_value;          //Define variable to read ADC data
+float     voltage_adjust;         // adjust reading 
 bool      deep_sleep_forever = false;    // if battery is <2.8 Volt
 
 char      battery_string[15];     // für Batterie Zustand
@@ -164,7 +168,7 @@ char*     topic =     "switcher2/wetter/data";
 char*     topic_lw =  "switcher2/wetter/lw";
 int       inout_door ;          // HIGH: indoor, LOW: outdoor
 String    last_will_msg = "Verbindung verloren zu Sensor: ";
-String    the_sketchname;
+
 unsigned long currentMillis;
 bool      mqtt_status;
 #define LED 2                   //Define blinking LED pin
@@ -178,10 +182,11 @@ struct {
   uint8_t channel;        // 1 byte,   5 in total
   uint8_t ap_mac[6];      // 6 bytes, 11 in total
   uint8_t ssid[6];        // 6 bytes, 17 in total
-  unsigned long waketime; // 4 bytes last wake time 21 in total 
-  uint8_t padding1;        // 1 byte,  22 in total
-  uint8_t padding2;        // 1 byte,  23 in total
-  uint8_t padding3;        // 1 byte,  24 in total
+  unsigned long wifitime; // 4 bytes last wifi time 21 in total 
+  unsigned long waketime; // 4 bytes last wake time 25 in total 
+  uint8_t padding1;        // 1 byte,  26 in total
+  uint8_t padding2;        // 1 byte,  27 in total
+  uint8_t padding3;        // 1 byte,  28 in total
 } rtcData;
   
 // Function Prototypes -----------------------
@@ -205,6 +210,7 @@ void setup() {
    String   msg;
    char     message[50];
    char     elapsed_time_c[5];
+   char     wifi_time_c[5];
    int      ret;
    bool     software_wachtdog = false;
    
@@ -215,9 +221,9 @@ void setup() {
   display_Running_Sketch();
 
  // we disable WiFi, coming from DeepSleep, as we do not need it right away
-  WiFi.mode( WIFI_OFF );
-  WiFi.forceSleepBegin();
-  delay( 1 );
+//  WiFi.mode( WIFI_OFF );
+//  WiFi.forceSleepBegin();
+//  delay( 1 );
 
   
 // dies von hier:
@@ -317,16 +323,18 @@ void setup() {
   pinMode       (indoor_outdoor_pin, INPUT_PULLUP);   // defines indoor-outdoor
   pinMode       (adc_sensor_pin, OUTPUT);       // Spannungsteiler/Sensor ein/aus     
   digitalWrite  (adc_sensor_pin, HIGH);          // Spannungsteiler/Sensor einschalten
-  DEBUGPRINTLN1 ("Power Sensor/ADC einschalten");
+  DEBUGPRINTLN1 ("Power Sensor einschalten");
   
   // check it outdoor or indoor sensor
   inout_door = digitalRead  (indoor_outdoor_pin);
   if (inout_door == HIGH) {
      DEBUGPRINTLN1 ("Bin Indoor");
+     voltage_adjust = VCC_ADJ_indoor;
      last_will_msg = last_will_msg + "indoor"; 
   }
   else {
      DEBUGPRINTLN1 ("Bin Outdoor");
+     voltage_adjust = VCC_ADJ_outdoor;
      last_will_msg = last_will_msg + "outdoor";
   }
 
@@ -338,10 +346,11 @@ void setup() {
 
   Serial.print ("Last waketime: ");         // last wake duration from rtc mem
   Serial.println (rtcData.waketime);
-  
+  Serial.print ("Last wifitime: ");         // last wake duration from rtc mem
+  Serial.println (rtcData.wifitime);  
     //Switch Radio back On
-  WiFi.forceSleepWake();
-  delay( 1 );
+//  WiFi.forceSleepWake();
+//  delay( 1 );
 
 // Disable the WiFi persistence.  The ESP8266 will not load and save WiFi settings unnecessarily in the flash memory.
   WiFi.persistent( false );
@@ -361,6 +370,7 @@ void setup() {
 // now, we need to compare the last used ssid (from rtc mem) with the current ssid
   memcpy( wifi_ssid_old, rtcData.ssid, 6 );  // Copy 6 bytes of ssid used
 
+
   bool same = true;
   for (n = 0; n < (sizeof (wifi_ssid)) ; n++ ) {
    if (wifi_ssid_old[n] !=  wifi_ssid[n])
@@ -371,8 +381,7 @@ void setup() {
     DEBUGPRINTLN1 ("we have new ssid: ");
     DEBUGPRINTLN1 (wifi_ssid);
     ret1 = false;                       // ssid has changed so we need to do e regular wifi.begin()
-  }
- 
+  } 
   // ssid has not changed
   // so we replace the normally used "WiFi.begin();" with a precedure using connection data stored by us
   if( ret1 ) {
@@ -383,6 +392,9 @@ void setup() {
   }
   else {
      DEBUGPRINTLN1 ("rtc data NOT valid or new ssid, make regular wifi connection");
+     rtcData.waketime = 0;              // no old value, set to zero
+     rtcData.wifitime = 0;              // no old value, set to zero    
+
   // The RTC data was not valid, so make a regular connection
     WiFi.begin( wifi_ssid, wifi_password );
   }
@@ -416,14 +428,15 @@ void setup() {
 // read Sensor, warten auf wiFi und dann MQTT
 
    readSensor ();
-   batt_status = batt_voltage ();
+   batt_status = batt_voltage (voltage_adjust);
    delay(10);
 
    waitForWifi();           // connect to WiFi, kommt nicht zurück, falls NO connection
 
  
    PRINTTIME ("bis wifi ok msec: ");
-  
+   wifi_time_ms =  elapsed_time(start_time_ms);   // save elapsed time till wifi ok
+   
    mqtt_connect();             // connect to MQTT broker
 
    PRINTTIME ("bis mqtt connect msec: ");
@@ -434,9 +447,10 @@ void setup() {
 
 // put togehther the message 
     msg = "";
-    int elapsed_time_int = (int)elapsed_time_ms;
-    sprintf(elapsed_time_c, "%5d", elapsed_time_int);
-    
+ 
+    sprintf(elapsed_time_c, "%5d", int(rtcData.waketime));
+    sprintf(wifi_time_c, "%5d", int(rtcData.wifitime));
+     
     if (inout_door == HIGH) {
       msg = msg + "indoor/";
     }
@@ -445,7 +459,7 @@ void setup() {
     }
     msg = msg + batt_status;
     msg = msg + "/" + sens_status;
-    msg = msg + "/" + elapsed_time_c;
+    msg = msg + "/" + wifi_time_c + " -" + elapsed_time_c;
     msg = msg + "/";
     msg = msg + temp;
     msg = msg + "/";
@@ -545,17 +559,15 @@ void display_Running_Sketch (void){
   int slash_loc = the_path.lastIndexOf('/');
   String the_cpp_name = the_path.substring(slash_loc+1);
   int dot_loc = the_cpp_name.lastIndexOf('.');
-//  String the_sketchname = the_cpp_name.substring(0, dot_loc);
-  the_sketchname = the_cpp_name.substring(0, dot_loc);
+  String the_sketchname = the_cpp_name.substring(0, dot_loc);
 
-  
-  DEBUGPRINT1 ("\nRunning Sketch: ");
-  DEBUGPRINTLN1 (the_sketchname);
-  DEBUGPRINTLN1 ("Compiled on: ");
-  DEBUGPRINT1 (__DATE__);
-  DEBUGPRINT1 (" at ");
-  DEBUGPRINT1 (__TIME__);
-  DEBUGPRINT1 ("\n");
+  Serial.print("\nRunning Sketch: ");
+  Serial.println(the_sketchname);
+  Serial.print("Compiled on: ");
+  Serial.print(__DATE__);
+  Serial.print(" at ");
+  Serial.print(__TIME__);
+  Serial.print("\n");
 }
 
 // ------------------------------------
@@ -578,7 +590,7 @@ void display_Esp_Info() {
 //-------------------------------------
 void deepsleep() {
 
-  DEBUGPRINTLN1 ("Power Sensor/ADC ausschalten");
+  DEBUGPRINTLN1 ("Power Sensor ausschalten");
   digitalWrite  (adc_sensor_pin, LOW);          // Spannungsteiler/Sensor ausschalten 
   DEBUGPRINT1 ("Going into deep sleep for ");
   DEBUGPRINT1 (String(sleepTimeS));
@@ -586,14 +598,14 @@ void deepsleep() {
 
   sleepTicker.detach(); 
  
- // ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
-   ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DISABLED);
+ ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DEFAULT);
+ //ESP.deepSleep(sleepTimeS * 1000000, WAKE_RF_DISABLED);
   // It can take a while for the ESP to actually go to sleep.
   // When it wakes up we start again in setup().
-  delay (1);
+  delay (100);
 
 // wird nie ausgeführt...
-  DEBUGPRINTLN1 ("Nach deep sleep...");
+  DEBUGPRINTLN1 ("Nach deep sleep...(should not be reached!)");
   yield();
 }
 
@@ -645,42 +657,46 @@ void watchdog_sketch() {
 }
 
 //------------------------------------------------
-String batt_voltage () {
+String batt_voltage (float adjust) {
   
   String bat_str;
-  delay (10);
+  uint32_t vcc;
+  int i;
 
-  voltage_value_raw = ESP.getVcc();
-  voltage_value = (voltage_value_raw / 1024.0) * VCC_ADJ ;
-//  voltage_value = analogRead(A0);       //Read ADC
+   // perform 4 measurements
+   vcc = 0;
+   for(i=0; i<4; i++) {
+      vcc += ESP.getVcc();
+      delay(2);
+   }
+   vcc = vcc>>2;
+
+  voltage_value = vcc / 1000.0 * adjust;      // adjust value (calibrated with voltmeter)
  
-  DEBUGPRINT1   ("ADC Value RAW: ");       //Print Message
-  DEBUGPRINTLN1   (voltage_value_raw);             //Print ADC value
+  DEBUGPRINT1   ("VCC Value RAW: ");       //Print Message
+  DEBUGPRINTLN1   (vcc);             //Print ADC value
   DEBUGPRINT1   ("VCC: ");       //Print Message
   DEBUGPRINT1   (voltage_value);             //Print ADC value
   DEBUGPRINTLN1  (" Volt"); 
   delay(1);                             //
 
-  dtostrf(voltage_value, 4, 2, battery_string);
+  dtostrf(voltage_value, 4, 1, battery_string);
     
   battery_string[4] = '\0';
   bat_str= String(battery_string);
-    
-  if (voltage_value > 3.0) {
+   
+  if (voltage_value > 3.2) {
     bat_str = bat_str + " - Perfekt";
     }
   else {
-    if (voltage_value > 2.8) {
+    if (voltage_value > 2.9) {
     bat_str = bat_str + " - Gut";
     }
     else
     {
      bat_str = bat_str + " - Recharge Battery"; 
-     deep_sleep_forever = true;
     }
   } 
-
- //  DEBUGPRINTLN1  (bat_str); 
       
   return (bat_str);
   
@@ -782,7 +798,7 @@ void mqtt_connect() {
     DEBUGPRINT1 ("\nAttempting MQTT connection...Client-ID: ");
     client.setServer(ip_mqtt, 1883);
     // Create a random client ID
-    String clientId = the_sketchname;
+    String clientId = "swesp";
     clientId += String(random(0xffff), HEX);
     DEBUGPRINTLN1 (clientId);
 
@@ -797,7 +813,10 @@ void mqtt_connect() {
 #else
  // connect OHNE Angabe eines last will
 #if defined MQTT_AUTH 
-    DEBUGPRINTLN1 ("MQTT MIT userid/pw");
+    DEBUGPRINT1 ("MQTT MIT userid/pw: ");
+    DEBUGPRINT1 (user_id_mqtt); 
+    DEBUGPRINT1 ("/");
+    DEBUGPRINTLN1 (password_mqtt);
     if (client.connect(clientId.c_str(), user_id_mqtt,password_mqtt ))
     {
 #else
@@ -869,6 +888,7 @@ void write_rtc_mem() {
 // Write current connection info back to RTC
 
 rtcData.channel = WiFi.channel();
+rtcData.wifitime =  wifi_time_ms;
 rtcData.waketime =  elapsed_time(start_time_ms);
 memcpy( rtcData.ap_mac, WiFi.BSSID(), 6 ); // Copy 6 bytes of BSSID (AP's MAC address)
 memcpy( rtcData.ssid, wifi_ssid, 6 );  // Copy 6 bytes of ssid used
