@@ -37,7 +37,7 @@ parser = 0
 # hier wird der file swdosen.ini gelsen und die dort gespeicherte Anzahl Dosen zurückgegeben
 # neu im Januar 2019
 def read_dosenconfig (filename,myprint,debug):
-
+    global parser
     found = False
     myprint.myprint (DEBUG_LEVEL2,"--> read_dosenconfig called")
     parser = SafeConfigParser()         # eine Instanz der Klasse SafeConfigParser machen
@@ -72,10 +72,10 @@ def read_dosenconfig (filename,myprint,debug):
 # write file dosenconfig--------------- 
 # er wird der config-File dosen.ini jedesmal neu geschrieben, er enthält nur eine Sektion mit zwei tuples 
 # neu im Januar 2019
-def write_dosenconfig (filename, myprint, wert):
+def write_dosenconfig (filename, myprint, wert, debug):
     dosen= 99                   # default wert bei not found
     found = False
-    myprint (DEBUG_LEVEL2,"--> write_dosenconfig {} called".format (wert))
+    myprint.myprint (DEBUG_LEVEL2,"--> write_dosenconfig {} called".format (wert))
 #  erst alle Werte im config löschen, damit nur die neuen Tuple geschrieben werden.
     
     for section in parser.sections():
@@ -94,18 +94,18 @@ def write_dosenconfig (filename, myprint, wert):
                     found = True     
             fp.close()                      # close file           
         else:
-            myprint (DEBUG_LEVEL0,"ConfigRead Abschnitt {} fehlt in Configfile {}".format("anzdosen","swdosen.ini"))  
+            myprint.myprint (DEBUG_LEVEL0,"ConfigRead Abschnitt {} fehlt in Configfile {}".format("anzdosen","swdosen.ini"))  
         
-        myprint (DEBUG_LEVEL2,"Dosen anzahl gefunden: {}".format(dosen))
+        myprint.myprint (DEBUG_LEVEL2,"Dosen anzahl gefunden: {}".format(dosen))
     except FileNotFoundError:
-        myprint (DEBUG_LEVEL2,"File swdosen.ini nicht gefunden, wird neu erstellt")
+        myprint.myprint (DEBUG_LEVEL2,"File swdosen.ini nicht gefunden, wird neu erstellt")
 
-    myprint (DEBUG_LEVEL3,"--> ConfigRead write_value found: {} gefunden. {} neu: {}". format (found, dosen, str(wert)))
+    myprint.myprint (DEBUG_LEVEL3,"--> ConfigRead write_value found: {} gefunden. {} neu: {}". format (found, dosen, str(wert)))
 
     if (dosen != wert):
     
     # zuerst alle Werte im config löschen, damit nur die neuen Tuple geschrieben werden.
-        myprint (DEBUG_LEVEL2,"--> ConfigRead write_value nun schreiben")       
+        myprint.myprint (DEBUG_LEVEL2,"--> ConfigRead write_value nun schreiben")       
         for section in parser.sections():
             parser.remove_section(section)
 
@@ -118,9 +118,9 @@ def write_dosenconfig (filename, myprint, wert):
 # writing our configuration file to 'swdosen.ini'
         parser.write(cfgfile)
         cfgfile.close()
-        myprint (DEBUG_LEVEL0,"--> ConfigRead write file swdosen.ini geschrieben, Anzahl: {}".format(str(wert))) 
+        myprint.myprint (DEBUG_LEVEL0,"--> ConfigRead write file swdosen.ini geschrieben, Anzahl: {}".format(str(wert))) 
     else:
-        myprint (DEBUG_LEVEL1,"--> ConfigRead write anzahl dosen identisch, nichts schreiben")
+        myprint.myprint (DEBUG_LEVEL1,"--> ConfigRead write anzahl dosen identisch, nichts schreiben")
 
 
 # --------------------------

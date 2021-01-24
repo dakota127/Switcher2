@@ -663,7 +663,7 @@ def  ipc_behandeln (func,wdose):
         path1 = os.path.dirname(os.path.realpath(__file__))    # pfad wo dieses script laeuft
 
         dosenconfig_file = path1 + "/swdosen.ini"
-        write_dosenconfig (dosenconfig_file, int(wdose))
+        write_dosenconfig (dosenconfig_file, mypri, int(wdose), debug)
         anz_dosen_config = int(wdose)                   # in diese variable versorgen
         info_fuer_webserver[0] = anz_dosen_config       # wird später an den webserver uebermitelt
         term_verlangt = 1                               # dies führt zu Beenden des switchers und zu reboot pi
